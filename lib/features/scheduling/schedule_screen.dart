@@ -141,7 +141,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(GravitySpacing.lg),
                     itemCount: sessions.length,
-                    separatorBuilder: (_, __) =>
+                    separatorBuilder: (_, index) =>
                         const SizedBox(height: GravitySpacing.md),
                     itemBuilder: (context, index) {
                       final session = sessions[index];

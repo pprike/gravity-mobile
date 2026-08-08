@@ -134,7 +134,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(GravitySpacing.lg),
                     itemCount: bookings.length,
-                    separatorBuilder: (_, __) =>
+                    separatorBuilder: (_, index) =>
                         const SizedBox(height: GravitySpacing.md),
                     itemBuilder: (context, index) {
                       final booking = bookings[index];

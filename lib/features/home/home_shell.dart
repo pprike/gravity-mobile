@@ -135,7 +135,7 @@ class _DashboardTab extends ConsumerWidget {
           const SizedBox(height: GravitySpacing.sm),
           bookingsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (_, __) => const GravityEmptyState(
+            error: (error, _) => const GravityEmptyState(
               icon: Icons.event_available_outlined,
               title: "Could not load bookings",
               description: "Pull to refresh or open the Bookings tab.",

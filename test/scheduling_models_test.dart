@@ -1,0 +1,39 @@
+import "package:flutter_test/flutter_test.dart";
+
+import "package:gravity_mobile/features/scheduling/models/scheduling_models.dart";
+
+void main() {
+  group("Scheduling models", () {
+    test("parses class session with bookedByMe flag", () {
+      final session = ClassSession.fromJson({
+        "id": "88888888-8888-8888-8888-888888888888",
+        "name": "Peak Pilates Flow",
+        "startsAt": "2026-08-08T11:00:00Z",
+        "endsAt": "2026-08-08T12:00:00Z",
+        "capacity": 12,
+        "bookedCount": 9,
+        "status": "scheduled",
+        "bookedByMe": true,
+      });
+
+      expect(session.name, "Peak Pilates Flow");
+      expect(session.spotsLeft, 3);
+      expect(session.bookedByMe, isTrue);
+    });
+
+    test("parses upcoming booking from API", () {
+      final booking = UpcomingBooking.fromJson({
+        "bookingId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "sessionId": "88888888-8888-8888-8888-888888888888",
+        "className": "HIIT",
+        "startsAt": "2026-08-08T11:00:00Z",
+        "endsAt": "2026-08-08T12:00:00Z",
+        "bookingStatus": "confirmed",
+        "sessionStatus": "scheduled",
+      });
+
+      expect(booking.className, "HIIT");
+      expect(booking.bookingStatus, "confirmed");
+    });
+  });
+}

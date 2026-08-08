@@ -127,9 +127,28 @@ class ApiClient {
 
   Future<T> get<T>(
     String path, {
+    Map<String, dynamic>? queryParameters,
     required T Function(Object? json) fromJson,
   }) {
-    return _request("GET", path, fromJson: fromJson);
+    return _request(
+      "GET",
+      path,
+      queryParameters: queryParameters,
+      fromJson: fromJson,
+    );
+  }
+
+  Future<List<T>> getList<T>(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    required T Function(Object? json) fromJson,
+  }) {
+    return _requestList(
+      "GET",
+      path,
+      queryParameters: queryParameters,
+      fromJson: fromJson,
+    );
   }
 
   Future<T> put<T>(
@@ -143,9 +162,23 @@ class ApiClient {
   Future<T> post<T>(
     String path, {
     Object? data,
+    Map<String, dynamic>? queryParameters,
     required T Function(Object? json) fromJson,
   }) {
-    return _request("POST", path, data: data, fromJson: fromJson);
+    return _request(
+      "POST",
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      fromJson: fromJson,
+    );
+  }
+
+  Future<T> delete<T>(
+    String path, {
+    required T Function(Object? json) fromJson,
+  }) {
+    return _request("DELETE", path, fromJson: fromJson);
   }
 
   Future<T> upload<T>(
@@ -170,18 +203,61 @@ class ApiClient {
     String method,
     String path, {
     Object? data,
+    Map<String, dynamic>? queryParameters,
     required T Function(Object? json) fromJson,
   }) async {
     try {
       final response = await _dio.request(
         path,
         data: data,
+        queryParameters: queryParameters,
         options: Options(method: method),
       );
       return _parseResponse(response, fromJson);
     } on DioException catch (error) {
       throw _mapDioError(error);
     }
+  }
+
+  Future<List<T>> _requestList<T>(
+    String method,
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    required T Function(Object? json) fromJson,
+  }) async {
+    try {
+      final response = await _dio.request(
+        path,
+        queryParameters: queryParameters,
+        options: Options(method: method),
+      );
+      return _parseListResponse(response, fromJson);
+    } on DioException catch (error) {
+      throw _mapDioError(error);
+    }
+  }
+
+  List<T> _parseListResponse<T>(
+    Response<dynamic> response,
+    T Function(Object? json) fromJson,
+  ) {
+    final body = response.data;
+    if (body is! Map<String, dynamic>) {
+      throw ApiException(message: "Invalid response", code: "INVALID_RESPONSE");
+    }
+
+    final envelope = ApiEnvelope<List<T>>.fromJson(
+      body,
+      (json) => (json as List<dynamic>).map(fromJson).toList(),
+    );
+    if (envelope.error != null) {
+      throw ApiException(
+        message: envelope.error!.message,
+        code: envelope.error!.code,
+        statusCode: response.statusCode,
+      );
+    }
+    return envelope.data ?? [];
   }
 
   T _parseResponse<T>(

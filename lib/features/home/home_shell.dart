@@ -7,6 +7,10 @@ import "../../core/widgets/gravity_button.dart";
 import "../../core/widgets/gravity_card.dart";
 import "../../core/widgets/gravity_empty_state.dart";
 import "../profile/profile_screen.dart";
+import "../scheduling/bookings_screen.dart";
+import "../scheduling/schedule_screen.dart";
+import "../scheduling/scheduling_formatters.dart";
+import "../scheduling/scheduling_providers.dart";
 
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
@@ -18,15 +22,21 @@ class HomeShell extends ConsumerStatefulWidget {
 class _HomeShellState extends ConsumerState<HomeShell> {
   int _index = 0;
 
+  void _goToTab(int index) => setState(() => _index = index);
+
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider).value;
     final displayName = session?.user.displayName ?? "Member";
 
     final pages = [
-      _DashboardTab(displayName: displayName),
-      const _ScheduleTab(),
-      const _BookingsTab(),
+      _DashboardTab(
+        displayName: displayName,
+        onBookClass: () => _goToTab(1),
+        onViewBookings: () => _goToTab(2),
+      ),
+      const ScheduleScreen(),
+      const BookingsScreen(),
       const _CommunityTab(),
       const ProfileScreen(embedded: true),
     ];
@@ -68,13 +78,21 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   }
 }
 
-class _DashboardTab extends StatelessWidget {
-  const _DashboardTab({required this.displayName});
+class _DashboardTab extends ConsumerWidget {
+  const _DashboardTab({
+    required this.displayName,
+    required this.onBookClass,
+    required this.onViewBookings,
+  });
 
   final String displayName;
+  final VoidCallback onBookClass;
+  final VoidCallback onViewBookings;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bookingsAsync = ref.watch(upcomingBookingsProvider);
+
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.all(GravitySpacing.lg),
@@ -98,7 +116,7 @@ class _DashboardTab extends StatelessWidget {
                 child: GravityButton(
                   label: "Book class",
                   icon: Icons.add_rounded,
-                  onPressed: () {},
+                  onPressed: onBookClass,
                 ),
               ),
               const SizedBox(width: GravitySpacing.sm),
@@ -115,11 +133,49 @@ class _DashboardTab extends StatelessWidget {
           const SizedBox(height: GravitySpacing.lg),
           _SectionHeader(title: "Upcoming bookings"),
           const SizedBox(height: GravitySpacing.sm),
-          const GravityEmptyState(
-            icon: Icons.event_available_outlined,
-            title: "No upcoming bookings",
-            description:
-                "Browse the schedule to book your next class.",
+          bookingsAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (_, __) => const GravityEmptyState(
+              icon: Icons.event_available_outlined,
+              title: "Could not load bookings",
+              description: "Pull to refresh or open the Bookings tab.",
+            ),
+            data: (bookings) {
+              if (bookings.isEmpty) {
+                return const GravityEmptyState(
+                  icon: Icons.event_available_outlined,
+                  title: "No upcoming bookings",
+                  description: "Browse the schedule to book your next class.",
+                );
+              }
+
+              final next = bookings.first;
+              return GravityCard(
+                padding: const EdgeInsets.all(GravitySpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      next.className,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "${SchedulingFormatters.bookingDateLabel(next.startsAt)} · "
+                      "${SchedulingFormatters.timeOfDay(next.startsAt)}",
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: GravitySpacing.md),
+                    GravityButton(
+                      label: "View all bookings",
+                      variant: GravityButtonVariant.secondary,
+                      onPressed: onViewBookings,
+                      fullWidth: true,
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
           const SizedBox(height: GravitySpacing.lg),
           _SectionHeader(title: "Membership"),
@@ -199,66 +255,6 @@ class _SectionHeader extends StatelessWidget {
       style: Theme.of(context).textTheme.titleSmall?.copyWith(
             color: GravityColors.neutral800,
           ),
-    );
-  }
-}
-
-class _ScheduleTab extends StatelessWidget {
-  const _ScheduleTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.all(GravitySpacing.lg),
-        children: [
-          Text("Schedule", style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: GravitySpacing.sm),
-          Text(
-            "Browse classes and book your next session.",
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: GravityColors.neutral600,
-                ),
-          ),
-          const SizedBox(height: GravitySpacing.lg),
-          const GravityEmptyState(
-            icon: Icons.calendar_month_outlined,
-            title: "Class schedule coming soon",
-            description:
-                "The calendar view will list available classes with capacity and waitlist status.",
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BookingsTab extends StatelessWidget {
-  const _BookingsTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.all(GravitySpacing.lg),
-        children: [
-          Text("Bookings", style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: GravitySpacing.sm),
-          Text(
-            "View and manage your upcoming sessions.",
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: GravityColors.neutral600,
-                ),
-          ),
-          const SizedBox(height: GravitySpacing.lg),
-          const GravityEmptyState(
-            icon: Icons.event_note_outlined,
-            title: "No bookings yet",
-            description:
-                "Confirmed classes and waitlist entries will appear here.",
-          ),
-        ],
-      ),
     );
   }
 }

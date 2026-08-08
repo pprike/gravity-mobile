@@ -19,11 +19,9 @@ final profileControllerProvider = StateNotifierProvider.autoDispose
 
 class ProfileController extends StateNotifier<AsyncValue<UserProfile?>> {
   ProfileController({
-    required ProfileRepository repository,
-    required String userId,
-  })  : _repository = repository,
-        _userId = userId,
-        super(const AsyncValue.loading()) {
+    required this._repository,
+    required this._userId,
+  }) : super(const AsyncValue.loading()) {
     load();
   }
 

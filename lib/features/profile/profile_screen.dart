@@ -4,11 +4,17 @@ import "package:go_router/go_router.dart";
 import "package:image_picker/image_picker.dart";
 
 import "../../core/providers/app_providers.dart";
+import "../../core/theme/design_tokens.dart";
+import "../../core/widgets/gravity_button.dart";
+import "../../core/widgets/gravity_card.dart";
+import "../../core/widgets/gravity_input.dart";
 import "models/user_profile.dart";
 import "profile_controller.dart";
 
 class ProfileScreen extends ConsumerStatefulWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({super.key, this.embedded = false});
+
+  final bool embedded;
 
   @override
   ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
@@ -132,20 +138,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     if (profileState.hasError && member == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text("Profile")),
+        appBar: widget.embedded ? null : _buildAppBar(member),
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(GravitySpacing.lg),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(profileState.error.toString()),
-                const SizedBox(height: 16),
-                ElevatedButton(
+                const SizedBox(height: GravitySpacing.md),
+                GravityButton(
+                  label: "Retry",
                   onPressed: () => ref
                       .read(profileControllerProvider(session.user.id).notifier)
                       .load(),
-                  child: const Text("Retry"),
                 ),
               ],
             ),
@@ -161,34 +167,44 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final avatarUrl = _resolveAvatarUrl(member?.avatarUrl);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Profile"),
-        actions: [
-          if (!_isEditing)
-            IconButton(
-              tooltip: "Edit",
-              onPressed: member == null
-                  ? null
-                  : () => setState(() => _isEditing = true),
-              icon: const Icon(Icons.edit_outlined),
-            ),
-          IconButton(
-            tooltip: "Sign out",
-            onPressed: _logout,
-            icon: const Icon(Icons.logout),
-          ),
-        ],
-      ),
+      appBar: widget.embedded ? null : _buildAppBar(member),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(GravitySpacing.lg),
           children: [
+            if (widget.embedded) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Profile",
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  Row(
+                    children: [
+                      if (!_isEditing && member != null)
+                        IconButton(
+                          tooltip: "Edit",
+                          onPressed: () => setState(() => _isEditing = true),
+                          icon: const Icon(Icons.edit_outlined),
+                        ),
+                      IconButton(
+                        tooltip: "Sign out",
+                        onPressed: _logout,
+                        icon: const Icon(Icons.logout_rounded),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: GravitySpacing.md),
+            ],
             Center(
               child: Stack(
                 children: [
                   CircleAvatar(
                     radius: 48,
-                    backgroundColor: const Color(0xFFE2E8F0),
+                    backgroundColor: GravityColors.neutral200,
                     backgroundImage:
                         avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
                     child: avatarUrl.isEmpty
@@ -197,7 +213,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 .characters
                                 .first
                                 .toUpperCase(),
-                            style: const TextStyle(fontSize: 28),
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w600,
+                              color: GravityColors.neutral700,
+                            ),
                           )
                         : null,
                   ),
@@ -206,6 +226,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       right: 0,
                       bottom: 0,
                       child: IconButton.filled(
+                        style: IconButton.styleFrom(
+                          backgroundColor: GravityColors.primary600,
+                          foregroundColor: Colors.white,
+                        ),
                         onPressed: _isSaving
                             ? null
                             : () => _pickAvatar(session.user.id),
@@ -215,117 +239,155 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: GravitySpacing.sm),
             Center(
               child: Text(
                 session.user.email,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
+                      color: GravityColors.neutral600,
                     ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: GravitySpacing.lg),
             if (member == null)
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Text(
-                    "No member profile is linked to this account. "
-                    "Sign in with a Member role to edit profile details.",
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
+              GravityCard(
+                child: Text(
+                  "No member profile is linked to this account. "
+                  "Sign in with a Member role to edit profile details.",
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
               )
             else if (_isEditing) ...[
-              TextField(
-                controller: _displayNameController,
-                decoration: const InputDecoration(labelText: "Display name"),
-                textInputAction: TextInputAction.next,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _phoneController,
-                decoration: const InputDecoration(labelText: "Phone"),
-                keyboardType: TextInputType.phone,
-                textInputAction: TextInputAction.next,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                "Emergency contact",
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _emergencyNameController,
-                decoration: const InputDecoration(labelText: "Name"),
-                textInputAction: TextInputAction.next,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _emergencyPhoneController,
-                decoration: const InputDecoration(labelText: "Phone"),
-                keyboardType: TextInputType.phone,
-              ),
-              if (_error != null) ...[
-                const SizedBox(height: 16),
-                Text(
-                  _error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+              GravityCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    GravityInput(
+                      label: "Display name",
+                      controller: _displayNameController,
+                      textInputAction: TextInputAction.next,
+                    ),
+                    const SizedBox(height: GravitySpacing.md),
+                    GravityInput(
+                      label: "Phone",
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.next,
+                    ),
+                    const SizedBox(height: GravitySpacing.lg),
+                    Text(
+                      "Emergency contact",
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: GravitySpacing.sm),
+                    GravityInput(
+                      label: "Name",
+                      controller: _emergencyNameController,
+                      textInputAction: TextInputAction.next,
+                    ),
+                    const SizedBox(height: GravitySpacing.md),
+                    GravityInput(
+                      label: "Phone",
+                      controller: _emergencyPhoneController,
+                      keyboardType: TextInputType.phone,
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: GravitySpacing.md),
+                      Text(
+                        _error!,
+                        style: const TextStyle(color: GravityColors.danger600),
+                      ),
+                    ],
+                    const SizedBox(height: GravitySpacing.lg),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GravityButton(
+                            label: "Cancel",
+                            variant: GravityButtonVariant.secondary,
+                            onPressed: _isSaving
+                                ? null
+                                : () => setState(() {
+                                      _isEditing = false;
+                                      _populateFields(member);
+                                    }),
+                          ),
+                        ),
+                        const SizedBox(width: GravitySpacing.sm),
+                        Expanded(
+                          child: GravityButton(
+                            label: "Save",
+                            onPressed:
+                                _isSaving ? null : () => _save(session.user.id),
+                            isLoading: _isSaving,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _isSaving
-                          ? null
-                          : () => setState(() {
-                                _isEditing = false;
-                                _populateFields(member);
-                              }),
-                      child: const Text("Cancel"),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _isSaving ? null : () => _save(session.user.id),
-                      child: _isSaving
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text("Save"),
-                    ),
-                  ),
-                ],
               ),
             ] else ...[
-              _ProfileField(
-                label: "Display name",
-                value: member.displayName ?? "—",
+              GravityCard(
+                child: Column(
+                  children: [
+                    _ProfileField(
+                      label: "Display name",
+                      value: member.displayName ?? "—",
+                    ),
+                    const Divider(height: GravitySpacing.lg),
+                    _ProfileField(
+                      label: "Phone",
+                      value: member.phone ?? "—",
+                    ),
+                  ],
+                ),
               ),
-              _ProfileField(label: "Phone", value: member.phone ?? "—"),
-              const SizedBox(height: 8),
-              Text(
-                "Emergency contact",
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 8),
-              _ProfileField(
-                label: "Name",
-                value: member.emergencyContact?["name"] ?? "—",
-              ),
-              _ProfileField(
-                label: "Phone",
-                value: member.emergencyContact?["phone"] ?? "—",
+              const SizedBox(height: GravitySpacing.md),
+              GravityCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Emergency contact",
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: GravitySpacing.md),
+                    _ProfileField(
+                      label: "Name",
+                      value: member.emergencyContact?["name"] ?? "—",
+                    ),
+                    const Divider(height: GravitySpacing.lg),
+                    _ProfileField(
+                      label: "Phone",
+                      value: member.emergencyContact?["phone"] ?? "—",
+                    ),
+                  ],
+                ),
               ),
             ],
           ],
         ),
       ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(MemberProfileData? member) {
+    return AppBar(
+      title: const Text("Profile"),
+      actions: [
+        if (!_isEditing && member != null)
+          IconButton(
+            tooltip: "Edit",
+            onPressed: () => setState(() => _isEditing = true),
+            icon: const Icon(Icons.edit_outlined),
+          ),
+        IconButton(
+          tooltip: "Sign out",
+          onPressed: _logout,
+          icon: const Icon(Icons.logout_rounded),
+        ),
+      ],
     );
   }
 }
@@ -338,21 +400,21 @@ class _ProfileField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: Colors.grey.shade600,
-                ),
-          ),
-          const SizedBox(height: 4),
-          Text(value, style: Theme.of(context).textTheme.bodyLarge),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelMedium,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+        ),
+      ],
     );
   }
 }

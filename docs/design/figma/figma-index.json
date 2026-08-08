@@ -1,0 +1,57 @@
+{
+  "source": {
+    "title": "The Gravity App - Designs",
+    "url": "https://www.figma.com/design/94kHVaHUtL5qOgMExfXBzF/The-Gravity-App---Designs",
+    "fileKey": "94kHVaHUtL5qOgMExfXBzF",
+    "pulledAt": "2026-08-07"
+  },
+  "pages": [
+    {
+      "id": "0:1",
+      "name": "Design System",
+      "nodeId": "3:22",
+      "frameName": "design-system-tokens-and-components",
+      "screenshot": "screenshots/design-system-tokens.png",
+      "reference": "reference/design-system-tokens.tsx",
+      "doc": "design-tokens.md"
+    },
+    {
+      "id": "3:12",
+      "name": "Member Mobile App — Auth & Shell",
+      "screens": [
+        {
+          "id": "9:980",
+          "name": "mobile-sign-in",
+          "title": "Sign In",
+          "screenshot": "screenshots/mobile-sign-in.png",
+          "reference": "reference/mobile-sign-in.tsx",
+          "doc": "screens/mobile-sign-in.md",
+          "flutterTarget": "lib/features/auth/login_screen.dart"
+        },
+        {
+          "id": "9:1015",
+          "name": "mobile-shell-dashboard",
+          "title": "Dashboard",
+          "screenshot": "screenshots/mobile-shell-dashboard.png",
+          "reference": "reference/mobile-shell-dashboard.tsx",
+          "doc": "screens/mobile-shell-dashboard.md",
+          "flutterTarget": "lib/features/home/home_shell.dart"
+        },
+        {
+          "id": "9:1086",
+          "name": "mobile-shell-schedule",
+          "title": "Schedule",
+          "screenshot": "screenshots/mobile-shell-schedule.png",
+          "reference": "reference/mobile-shell-schedule.tsx",
+          "doc": "screens/mobile-shell-schedule.md",
+          "flutterTarget": "lib/features/home/home_shell.dart"
+        }
+      ]
+    }
+  ],
+  "notYetDesigned": [
+    "mobile-shell-bookings",
+    "mobile-shell-community",
+    "mobile-shell-profile"
+  ]
+}

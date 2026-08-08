@@ -17,11 +17,11 @@ Flutter member app for the [Gravity](https://github.com/pprike/gravity-docs) mul
 - go_router (navigation)
 - Dio (HTTP client)
 
-## Features (initial scaffold)
+## Features (Sprint 3)
 
-- Member login against `gravity-service`
-- Home shell with bottom navigation (dashboard placeholder)
-- Profile view and edit with avatar upload (GRA-113)
+- Member login against `gravity-service` (defaults to `member@tenant-a.com`)
+- Home shell with 5-tab bottom navigation (dashboard/schedule/bookings/community placeholders)
+- Profile view, edit, and avatar upload wired to `/api/v1/users/{id}/profile` (GRA-113 / US-14)
 
 ## Local development
 
@@ -50,13 +50,25 @@ flutter run --dart-define=API_BASE_URL=http://localhost:8080
 flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080
 ```
 
+**Physical phone or tablet** (API on your PC; replace with your machine's LAN IP):
+
+```bash
+flutter run --dart-define=API_BASE_URL=http://<your-lan-ip>:8080
+```
+
+Native Android/iOS builds do **not** use CORS. If you see a CORS error, you are almost certainly on the **web** target (`chrome` / `web-server`). Restart `gravity-service` with the `local` profile after pulling CORS updates, or run a native device/emulator instead:
+
+```bash
+flutter run -d <device-id> --dart-define=API_BASE_URL=http://10.0.2.2:8080
+```
+
 ### Dev login (with gravity-service on `local` profile)
 
-| Organization | Email | Password |
-|--------------|-------|----------|
-| `tenant-a` | `receptionist@tenant-a.com` | `Password123!` |
+| Organization | Email | Password | Role |
+|--------------|-------|----------|------|
+| `tenant-a` | `member@tenant-a.com` | `Password123!` | Member (profile editing) |
 
-Other seeded staff accounts: `admin@tenant-a.com`, `owner@tenant-a.com`, `coach@tenant-a.com` (same password). Profile editing requires a **Member** role; the local seed does not include a member account yet—use integration-test fixtures or add a member user in the API for full profile flows.
+Other seeded accounts (same password): `admin@tenant-a.com`, `owner@tenant-a.com`, `coach@tenant-a.com`, `receptionist@tenant-a.com`.
 
 ## Scripts
 
@@ -75,6 +87,8 @@ Other seeded staff accounts: `admin@tenant-a.com`, `owner@tenant-a.com`, `coach@
 ## Documentation
 
 UX flows, information architecture, and feature specs live in [gravity-docs](https://github.com/pprike/gravity-docs).
+
+**Figma designs:** Screen specs, tokens, and screenshots are stored in [`docs/design/figma/`](docs/design/figma/README.md) (source: [The Gravity App - Designs](https://www.figma.com/design/94kHVaHUtL5qOgMExfXBzF/The-Gravity-App---Designs)).
 
 ## CI
 

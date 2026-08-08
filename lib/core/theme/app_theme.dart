@@ -1,51 +1,167 @@
 import "package:flutter/material.dart";
+import "package:flutter/services.dart";
+
+import "design_tokens.dart";
 
 class AppTheme {
-  static const Color primary = Color(0xFF0D9488);
-
   static ThemeData light() {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: primary,
-      primary: primary,
+    const colorScheme = ColorScheme(
+      brightness: Brightness.light,
+      primary: GravityColors.primary600,
+      onPrimary: Colors.white,
+      secondary: GravityColors.primary500,
+      onSecondary: Colors.white,
+      error: GravityColors.danger600,
+      onError: Colors.white,
+      surface: Colors.white,
+      onSurface: GravityColors.neutral900,
     );
 
     return ThemeData(
+      useMaterial3: true,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+      scaffoldBackgroundColor: GravityColors.neutral50,
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.white,
-        foregroundColor: Color(0xFF0F172A),
+        foregroundColor: GravityColors.neutral900,
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: false,
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primary, width: 2),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        surfaceTintColor: Colors.transparent,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        titleTextStyle: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: GravityColors.neutral900,
         ),
       ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: Colors.white,
+        indicatorColor: GravityColors.primary50,
+        elevation: 0,
+        height: 72,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return TextStyle(
+            fontSize: 12,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            color: selected
+                ? GravityColors.primary700
+                : GravityColors.neutral600,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return IconThemeData(
+            color: selected
+                ? GravityColors.primary600
+                : GravityColors.neutral500,
+            size: 22,
+          );
+        }),
+      ),
+      textTheme: const TextTheme(
+        headlineMedium: TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.5,
+          color: GravityColors.neutral900,
+        ),
+        headlineSmall: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.25,
+          color: GravityColors.neutral900,
+        ),
+        titleLarge: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: GravityColors.neutral900,
+        ),
+        titleMedium: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: GravityColors.neutral900,
+        ),
+        titleSmall: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: GravityColors.neutral900,
+        ),
+        bodyLarge: TextStyle(
+          fontSize: 16,
+          height: 1.5,
+          color: GravityColors.neutral800,
+        ),
+        bodyMedium: TextStyle(
+          fontSize: 14,
+          height: 1.5,
+          color: GravityColors.neutral700,
+        ),
+        labelMedium: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: GravityColors.neutral600,
+        ),
+      ),
+      dividerColor: GravityColors.neutral200,
       cardTheme: CardThemeData(
         color: Colors.white,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0xFFE2E8F0)),
+          borderRadius: BorderRadius.circular(GravityRadii.lg),
+          side: const BorderSide(color: GravityColors.neutral200),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(GravityRadii.md),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(GravityRadii.md),
+          borderSide: const BorderSide(color: GravityColors.neutral300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(GravityRadii.md),
+          borderSide: const BorderSide(
+            color: GravityColors.primary500,
+            width: 2,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: GravityColors.primary600,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(GravityRadii.md),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: GravityColors.neutral900,
+          side: const BorderSide(color: GravityColors.neutral300),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(GravityRadii.md),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ),
     );

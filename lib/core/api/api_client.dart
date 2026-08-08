@@ -41,10 +41,9 @@ class ApiErrorBody {
 class ApiClient {
   ApiClient({
     required AppConfig config,
-    required AuthStorage authStorage,
+    required this._authStorage,
     Dio? dio,
   })  : _config = config,
-        _authStorage = authStorage,
         _dio = dio ??
             Dio(
               BaseOptions(

@@ -22,10 +22,9 @@ class LoginRequest {
 
 class AuthRepository {
   AuthRepository({
-    required ApiClient apiClient,
-    required AuthStorage authStorage,
-  })  : _apiClient = apiClient,
-        _authStorage = authStorage;
+    required this._apiClient,
+    required this._authStorage,
+  });
 
   final ApiClient _apiClient;
   final AuthStorage _authStorage;

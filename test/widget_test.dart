@@ -1,3 +1,4 @@
+import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:flutter_test/flutter_test.dart";
 
@@ -8,7 +9,9 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: GravityApp()));
     await tester.pumpAndSettle();
 
-    expect(find.text("Sign in to your member account"), findsOneWidget);
-    expect(find.text("Sign in"), findsOneWidget);
+    expect(find.text("Welcome back"), findsOneWidget);
+    expect(find.textContaining("Sign in to your"), findsOneWidget);
+    expect(find.text("Email Address"), findsOneWidget);
+    expect(find.widgetWithText(ElevatedButton, "Sign In"), findsOneWidget);
   });
 }

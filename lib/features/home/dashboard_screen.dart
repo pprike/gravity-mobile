@@ -60,7 +60,7 @@ class DashboardScreen extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: () => _refresh(ref),
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 48),
         children: [
           _WelcomeRow(
             displayName: displayName,
@@ -156,7 +156,7 @@ class DashboardScreen extends ConsumerWidget {
                 );
               }
               return SizedBox(
-                height: 196,
+                height: 208,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: upcoming.length,
@@ -704,11 +704,12 @@ class _PopularClassCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               session.name,
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                fontSize: 15,
+                fontSize: 14,
                 fontWeight: FontWeight.w700,
+                height: 1.25,
                 color: GravityColors.gray900,
               ),
             ),

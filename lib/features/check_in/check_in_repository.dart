@@ -3,11 +3,7 @@ import "../../core/demo/demo_catalog.dart";
 import "models/check_in_qr.dart";
 
 class CheckInRepository {
-  CheckInRepository(
-    this._apiClient, {
-    this.demoCatalog,
-    this.demoMode = false,
-  });
+  CheckInRepository(this._apiClient, {this.demoCatalog, this.demoMode = false});
 
   final ApiClient _apiClient;
   final DemoCatalog? demoCatalog;

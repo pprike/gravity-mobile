@@ -38,9 +38,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   void _openInbox() {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => const NotificationsInboxScreen(),
-      ),
+      MaterialPageRoute<void>(builder: (_) => const NotificationsInboxScreen()),
     );
   }
 
@@ -61,55 +59,65 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
     return Scaffold(
       backgroundColor: GravityColors.neutral50,
+      extendBody: false,
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            GravityAppHeader(
-              onNotifications: _openInbox,
-              unreadCount: unread,
-            ),
+            GravityAppHeader(onNotifications: _openInbox, unreadCount: unread),
             Expanded(
-              child: IndexedStack(index: _index, children: pages),
+              child: ClipRect(
+                child: IndexedStack(index: _index, children: pages),
+              ),
             ),
           ],
         ),
       ),
       bottomNavigationBar: DecoratedBox(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Colors.white,
-          border: Border(top: BorderSide(color: GravityColors.gray200)),
-        ),
-        child: NavigationBar(
-          selectedIndex: _index,
-          onDestinationSelected: _goToTab,
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home_rounded),
-              label: "Dashboard",
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.calendar_month_outlined),
-              selectedIcon: Icon(Icons.calendar_month_rounded),
-              label: "Schedule",
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.event_note_outlined),
-              selectedIcon: Icon(Icons.event_note_rounded),
-              label: "Bookings",
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.chat_bubble_outline_rounded),
-              selectedIcon: Icon(Icons.chat_bubble_rounded),
-              label: "Community",
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person_rounded),
-              label: "Profile",
+          border: const Border(top: BorderSide(color: GravityColors.gray200)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 16,
+              offset: const Offset(0, -4),
             ),
           ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: NavigationBar(
+            selectedIndex: _index,
+            onDestinationSelected: _goToTab,
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home_rounded),
+                label: "Dashboard",
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.calendar_month_outlined),
+                selectedIcon: Icon(Icons.calendar_month_rounded),
+                label: "Schedule",
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.event_note_outlined),
+                selectedIcon: Icon(Icons.event_note_rounded),
+                label: "Bookings",
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.chat_bubble_outline_rounded),
+                selectedIcon: Icon(Icons.chat_bubble_rounded),
+                label: "Community",
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.person_outline),
+                selectedIcon: Icon(Icons.person_rounded),
+                label: "Profile",
+              ),
+            ],
+          ),
         ),
       ),
     );

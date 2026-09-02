@@ -28,19 +28,24 @@ void main() {
     test("joins and leaves the waitlist on a full class", () {
       final catalog = DemoCatalog();
       final full = catalog.sessions.firstWhere(
-        (session) => session.isFull && !session.bookedByMe && !session.isCancelled,
+        (session) =>
+            session.isFull && !session.bookedByMe && !session.isCancelled,
       );
 
       final status = catalog.joinWaitlist(full.id);
       expect(status.position, greaterThan(0));
       expect(
-        catalog.sessions.firstWhere((session) => session.id == full.id).waitlistedByMe,
+        catalog.sessions
+            .firstWhere((session) => session.id == full.id)
+            .waitlistedByMe,
         isTrue,
       );
 
       catalog.leaveWaitlist(full.id);
       expect(
-        catalog.sessions.firstWhere((session) => session.id == full.id).waitlistedByMe,
+        catalog.sessions
+            .firstWhere((session) => session.id == full.id)
+            .waitlistedByMe,
         isFalse,
       );
     });

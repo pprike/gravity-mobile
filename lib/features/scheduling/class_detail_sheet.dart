@@ -63,8 +63,10 @@ class _ClassDetailSheetState extends State<ClassDetailSheet> {
   Widget build(BuildContext context) {
     final session = widget.session;
     final busy = _working || widget.isBusy;
-    final canBook = !session.bookedByMe && !session.isFull && !session.isCancelled;
-    final canWaitlist = !session.bookedByMe && (session.isFull || session.waitlistedByMe);
+    final canBook =
+        !session.bookedByMe && !session.isFull && !session.isCancelled;
+    final canWaitlist =
+        !session.bookedByMe && (session.isFull || session.waitlistedByMe);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -112,7 +114,10 @@ class _ClassDetailSheetState extends State<ClassDetailSheet> {
             runSpacing: 8,
             children: [
               _MetaChip(icon: Icons.person_rounded, label: session.coachLabel),
-              _MetaChip(icon: Icons.place_outlined, label: session.locationLabel),
+              _MetaChip(
+                icon: Icons.place_outlined,
+                label: session.locationLabel,
+              ),
               _MetaChip(
                 icon: Icons.groups_outlined,
                 label: session.isFull
@@ -121,7 +126,8 @@ class _ClassDetailSheetState extends State<ClassDetailSheet> {
               ),
             ],
           ),
-          if (session.description != null && session.description!.isNotEmpty) ...[
+          if (session.description != null &&
+              session.description!.isNotEmpty) ...[
             const SizedBox(height: GravitySpacing.md),
             Text(
               session.description!,
@@ -154,7 +160,9 @@ class _ClassDetailSheetState extends State<ClassDetailSheet> {
             )
           else if (canWaitlist)
             GravityButton(
-              label: session.waitlistedByMe ? "Leave waitlist" : "Join waitlist",
+              label: session.waitlistedByMe
+                  ? "Leave waitlist"
+                  : "Join waitlist",
               onPressed: busy ? null : () => _run(widget.onWaitlist),
               isLoading: busy,
               fullWidth: true,

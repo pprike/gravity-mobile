@@ -3,7 +3,11 @@ import "../../../core/demo/demo_catalog.dart";
 import "models/scheduling_models.dart";
 
 class SchedulingRepository {
-  SchedulingRepository(this._apiClient, {this.demoCatalog, this.demoMode = false});
+  SchedulingRepository(
+    this._apiClient, {
+    this.demoCatalog,
+    this.demoMode = false,
+  });
 
   final ApiClient _apiClient;
   final DemoCatalog? demoCatalog;

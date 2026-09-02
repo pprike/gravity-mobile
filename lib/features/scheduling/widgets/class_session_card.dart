@@ -69,7 +69,9 @@ class ClassSessionCard extends StatelessWidget {
                 width: 1,
                 height: 48,
                 color: GravityColors.gray200,
-                margin: const EdgeInsets.symmetric(horizontal: GravitySpacing.sm),
+                margin: const EdgeInsets.symmetric(
+                  horizontal: GravitySpacing.sm,
+                ),
               ),
               Expanded(
                 child: Column(

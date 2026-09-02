@@ -6,7 +6,12 @@ import "../../features/branding/branding.dart";
 import "../theme/design_tokens.dart";
 
 class GravityAppHeader extends ConsumerWidget {
-  const GravityAppHeader({super.key, this.onNotifications, this.trailing, this.unreadCount = 0});
+  const GravityAppHeader({
+    super.key,
+    this.onNotifications,
+    this.trailing,
+    this.unreadCount = 0,
+  });
 
   final VoidCallback? onNotifications;
   final Widget? trailing;

@@ -14,6 +14,7 @@ class GravityApp extends ConsumerWidget {
     return MaterialApp.router(
       title: "Gravity",
       theme: AppTheme.light(),
+      debugShowCheckedModeBanner: false,
       routerConfig: router,
     );
   }

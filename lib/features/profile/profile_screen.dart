@@ -162,7 +162,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final avatarUrl = _resolveAvatarUrl(member?.avatarUrl);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 48),
       children: [
         Row(
           children: [

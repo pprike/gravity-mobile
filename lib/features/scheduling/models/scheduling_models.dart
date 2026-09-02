@@ -41,13 +41,11 @@ class ClassSession {
 
   Duration get duration => endsAt.difference(startsAt);
 
-  String get coachLabel => coachName == null || coachName!.isEmpty
-      ? "Studio class"
-      : coachName!;
+  String get coachLabel =>
+      coachName == null || coachName!.isEmpty ? "Studio class" : coachName!;
 
-  String get locationLabel => locationName == null || locationName!.isEmpty
-      ? "Studio"
-      : locationName!;
+  String get locationLabel =>
+      locationName == null || locationName!.isEmpty ? "Studio" : locationName!;
 
   ClassSession copyWith({
     int? bookedCount,

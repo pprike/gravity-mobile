@@ -37,7 +37,10 @@ class InboxNotification {
             DateTime.now().toIso8601String(),
       ).toLocal(),
       read: json["read"] as bool? ?? json["isRead"] as bool? ?? false,
-      category: json["category"] as String? ?? json["type"] as String? ?? "announcements",
+      category:
+          json["category"] as String? ??
+          json["type"] as String? ??
+          "announcements",
     );
   }
 }

@@ -3,11 +3,7 @@ import "../../core/demo/demo_catalog.dart";
 import "models/chat_models.dart";
 
 class ChatRepository {
-  ChatRepository(
-    this._apiClient, {
-    this.demoCatalog,
-    this.demoMode = false,
-  });
+  ChatRepository(this._apiClient, {this.demoCatalog, this.demoMode = false});
 
   final ApiClient _apiClient;
   final DemoCatalog? demoCatalog;
@@ -29,7 +25,9 @@ class ChatRepository {
 
   Future<List<ChatMessage>> listMessages(String groupId) async {
     if (_demo) {
-      return List<ChatMessage>.from(demoCatalog!.messagesByGroup[groupId] ?? const []);
+      return List<ChatMessage>.from(
+        demoCatalog!.messagesByGroup[groupId] ?? const [],
+      );
     }
     try {
       return await _apiClient.getList(

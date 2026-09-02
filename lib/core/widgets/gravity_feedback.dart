@@ -18,6 +18,7 @@ abstract final class GravityFeedback {
           backgroundColor: error
               ? GravityColors.danger700
               : GravityColors.gray900,
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(GravityRadii.md),
           ),

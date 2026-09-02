@@ -90,7 +90,8 @@ class _ChatConversationScreenState
                   return const GravityEmptyState(
                     icon: Icons.chat_bubble_outline_rounded,
                     title: "Start the conversation",
-                    description: "Say hi to your studio. Messages stay in this group.",
+                    description:
+                        "Say hi to your studio. Messages stay in this group.",
                   );
                 }
                 return ListView.builder(

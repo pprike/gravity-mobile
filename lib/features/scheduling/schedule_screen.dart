@@ -95,7 +95,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   Widget build(BuildContext context) {
     final selectedDay = ref.watch(scheduleDayProvider);
     final sessionsAsync = ref.watch(classSessionsProvider);
-    final locations = ref.watch(studioLocationsProvider).valueOrNull ?? const [];
+    final locations =
+        ref.watch(studioLocationsProvider).valueOrNull ?? const [];
     final selectedLocationId = ref.watch(scheduleLocationIdProvider);
     final selectedLocationName = selectedLocationId == null
         ? "All Studios"
@@ -201,7 +202,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
                 return ListView.separated(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(GravitySpacing.lg),
+                  padding: const EdgeInsets.fromLTRB(
+                    GravitySpacing.lg,
+                    GravitySpacing.lg,
+                    GravitySpacing.lg,
+                    40,
+                  ),
                   itemCount: sessions.length,
                   separatorBuilder: (_, _) =>
                       const SizedBox(height: GravitySpacing.md),

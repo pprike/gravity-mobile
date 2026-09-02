@@ -61,10 +61,7 @@ class DemoCatalog extends ChangeNotifier {
       member: MemberProfileData(
         displayName: "Alex Rivera",
         phone: "+1 (555) 214-0192",
-        emergencyContact: {
-          "name": "Sam Rivera",
-          "phone": "+1 (555) 882-4410",
-        },
+        emergencyContact: {"name": "Sam Rivera", "phone": "+1 (555) 882-4410"},
       ),
     );
     subscription = const MemberSubscription(
@@ -141,7 +138,8 @@ class DemoCatalog extends ChangeNotifier {
           groupId: "chat-studio",
           senderId: "coach-marcus",
           senderName: "Marcus Vance",
-          body: "Who's coming through for Power Hour tonight? Bring a towel — it's a heater.",
+          body:
+              "Who's coming through for Power Hour tonight? Bring a towel — it's a heater.",
           createdAt: DateTime.now().subtract(const Duration(hours: 3)),
         ),
         ChatMessage(
@@ -150,7 +148,9 @@ class DemoCatalog extends ChangeNotifier {
           senderId: "member-priya",
           senderName: "Priya Shah",
           body: "I'll be in the back row. First class back after vacation 👋",
-          createdAt: DateTime.now().subtract(const Duration(hours: 2, minutes: 40)),
+          createdAt: DateTime.now().subtract(
+            const Duration(hours: 2, minutes: 40),
+          ),
         ),
       ],
       "chat-morning": [
@@ -170,7 +170,8 @@ class DemoCatalog extends ChangeNotifier {
           session.name.contains("Power Hour") &&
           session.startsAt.isAfter(DateTime.now()),
       orElse: () => sessions.firstWhere(
-        (session) => session.startsAt.isAfter(DateTime.now()) && !session.isFull,
+        (session) =>
+            session.startsAt.isAfter(DateTime.now()) && !session.isFull,
         orElse: () => sessions.first,
       ),
     );
@@ -192,7 +193,9 @@ class DemoCatalog extends ChangeNotifier {
   }
 
   List<UpcomingBooking> listUpcomingBookings() {
-    return bookings.where((booking) => booking.endsAt.isAfter(DateTime.now())).toList()
+    return bookings
+        .where((booking) => booking.endsAt.isAfter(DateTime.now()))
+        .toList()
       ..sort((a, b) => a.startsAt.compareTo(b.startsAt));
   }
 
@@ -245,12 +248,16 @@ class DemoCatalog extends ChangeNotifier {
   }
 
   ClassBooking cancelBooking(String bookingId) {
-    final bookingIndex = bookings.indexWhere((item) => item.bookingId == bookingId);
+    final bookingIndex = bookings.indexWhere(
+      (item) => item.bookingId == bookingId,
+    );
     if (bookingIndex < 0) {
       throw StateError("Booking not found");
     }
     final booking = bookings.removeAt(bookingIndex);
-    final sessionIndex = sessions.indexWhere((session) => session.id == booking.sessionId);
+    final sessionIndex = sessions.indexWhere(
+      (session) => session.id == booking.sessionId,
+    );
     if (sessionIndex >= 0) {
       final session = sessions[sessionIndex];
       sessions[sessionIndex] = session.copyWith(
@@ -361,7 +368,10 @@ class DemoCatalog extends ChangeNotifier {
       createdAt: DateTime.now(),
       mine: true,
     );
-    messagesByGroup[groupId] = [...(messagesByGroup[groupId] ?? const []), message];
+    messagesByGroup[groupId] = [
+      ...(messagesByGroup[groupId] ?? const []),
+      message,
+    ];
     notifyListeners();
     return message;
   }
@@ -384,7 +394,8 @@ class DemoCatalog extends ChangeNotifier {
       ),
       _DemoClass(
         name: "Olympic Weightlifting",
-        description: "Snatch and clean & jerk technique with coached progressions.",
+        description:
+            "Snatch and clean & jerk technique with coached progressions.",
         hour: 9,
         minute: 0,
         minutes: 60,
@@ -397,7 +408,8 @@ class DemoCatalog extends ChangeNotifier {
       ),
       _DemoClass(
         name: "Kettlebell Conditioning",
-        description: "Swings, cleans, and carries built into a metabolic circuit.",
+        description:
+            "Swings, cleans, and carries built into a metabolic circuit.",
         hour: 12,
         minute: 0,
         minutes: 45,

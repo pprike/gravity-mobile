@@ -36,6 +36,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final slug = _tenantController.text.trim().isEmpty
         ? _defaultTenant
         : _tenantController.text.trim();
+    const aliases = {
+      "tenant-a": "Iron Peak",
+      "iron-peak": "Iron Peak",
+      "ironpeak": "Iron Peak",
+    };
+    final mapped = aliases[slug.toLowerCase()];
+    if (mapped != null) return mapped;
     return slug
         .split("-")
         .map(
@@ -355,16 +362,39 @@ class _BrandingHeader extends StatelessWidget {
     return Column(
       children: [
         Container(
-          width: 64,
-          height: 64,
+          width: 72,
+          height: 72,
           decoration: BoxDecoration(
             color: GravityColors.primary50,
             borderRadius: BorderRadius.circular(GravityRadii.logo),
           ),
-          child: const Icon(
-            Icons.arrow_upward_rounded,
-            size: 36,
-            color: GravityColors.primary600,
+          child: const Center(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: "A",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: GravityColors.primary600,
+                      height: 1,
+                    ),
+                  ),
+                  WidgetSpan(
+                    alignment: PlaceholderAlignment.middle,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 1, bottom: 10),
+                      child: Icon(
+                        Icons.arrow_upward_rounded,
+                        size: 18,
+                        color: GravityColors.primary600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
         const SizedBox(height: GravitySpacing.md),

@@ -4,11 +4,7 @@ import "models/member_subscription.dart";
 import "models/user_profile.dart";
 
 class ProfileRepository {
-  ProfileRepository(
-    this._apiClient, {
-    this.demoCatalog,
-    this.demoMode = false,
-  });
+  ProfileRepository(this._apiClient, {this.demoCatalog, this.demoMode = false});
 
   final ApiClient _apiClient;
   final DemoCatalog? demoCatalog;

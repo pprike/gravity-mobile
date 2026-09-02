@@ -19,16 +19,15 @@ final scheduleDayProvider = StateProvider<DateTime>((ref) {
 
 final scheduleLocationIdProvider = StateProvider<String?>((ref) => null);
 
-final studioLocationsProvider = FutureProvider.autoDispose<List<StudioLocation>>((
-  ref,
-) async {
-  ref.watch(demoCatalogProvider);
-  try {
-    return await ref.watch(schedulingRepositoryProvider).listLocations();
-  } catch (_) {
-    return const [];
-  }
-});
+final studioLocationsProvider =
+    FutureProvider.autoDispose<List<StudioLocation>>((ref) async {
+      ref.watch(demoCatalogProvider);
+      try {
+        return await ref.watch(schedulingRepositoryProvider).listLocations();
+      } catch (_) {
+        return const [];
+      }
+    });
 
 final classSessionsProvider = FutureProvider.autoDispose<List<ClassSession>>((
   ref,
@@ -39,11 +38,7 @@ final classSessionsProvider = FutureProvider.autoDispose<List<ClassSession>>((
   final repository = ref.watch(schedulingRepositoryProvider);
   final start = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
   final end = start.add(const Duration(days: 1));
-  return repository.listSessions(
-    from: start,
-    to: end,
-    locationId: locationId,
-  );
+  return repository.listSessions(from: start, to: end, locationId: locationId);
 });
 
 final upcomingBookingsProvider =

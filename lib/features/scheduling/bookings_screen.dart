@@ -127,7 +127,12 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
 
                 return ListView.separated(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(GravitySpacing.lg),
+                  padding: const EdgeInsets.fromLTRB(
+                    GravitySpacing.lg,
+                    GravitySpacing.lg,
+                    GravitySpacing.lg,
+                    40,
+                  ),
                   itemCount: bookings.length,
                   separatorBuilder: (_, _) =>
                       const SizedBox(height: GravitySpacing.md),

@@ -100,7 +100,7 @@ class _UpdatesTab extends ConsumerWidget {
           }
           return ListView.separated(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
             itemCount: announcements.length,
             separatorBuilder: (_, _) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
@@ -186,7 +186,7 @@ class _ChatTab extends ConsumerWidget {
           );
         }
         return ListView.separated(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
           itemCount: groups.length,
           separatorBuilder: (_, _) => const SizedBox(height: 10),
           itemBuilder: (context, index) {
@@ -264,7 +264,10 @@ class _GroupTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: GravityColors.gray400),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: GravityColors.gray400,
+              ),
             ],
           ),
         ),

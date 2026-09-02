@@ -40,13 +40,20 @@ class ChatMessage {
   final DateTime createdAt;
   final bool mine;
 
-  factory ChatMessage.fromJson(Map<String, dynamic> json, {String? currentUserId}) {
-    final senderId = json["senderId"] as String? ?? json["authorUserId"] as String? ?? "";
+  factory ChatMessage.fromJson(
+    Map<String, dynamic> json, {
+    String? currentUserId,
+  }) {
+    final senderId =
+        json["senderId"] as String? ?? json["authorUserId"] as String? ?? "";
     return ChatMessage(
       id: json["id"] as String,
       groupId: json["groupId"] as String? ?? "",
       senderId: senderId,
-      senderName: json["senderName"] as String? ?? json["authorName"] as String? ?? "Member",
+      senderName:
+          json["senderName"] as String? ??
+          json["authorName"] as String? ??
+          "Member",
       body: json["content"] as String? ?? json["body"] as String? ?? "",
       createdAt: DateTime.parse(
         (json["createdAt"] as String?) ?? DateTime.now().toIso8601String(),

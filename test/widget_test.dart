@@ -23,7 +23,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text("Welcome back"), findsOneWidget);
-    expect(find.textContaining("Sign in to your"), findsOneWidget);
+    expect(find.text("Sign in to your Iron Peak account"), findsOneWidget);
     expect(find.text("Email Address"), findsOneWidget);
     expect(find.widgetWithText(ElevatedButton, "Sign In"), findsOneWidget);
     expect(find.text("Explore demo studio"), findsOneWidget);

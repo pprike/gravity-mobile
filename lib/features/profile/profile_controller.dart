@@ -4,24 +4,24 @@ import "../../core/providers/app_providers.dart";
 import "models/user_profile.dart";
 import "profile_repository.dart";
 
-final profileProvider =
-    FutureProvider.autoDispose.family<UserProfile, String>((ref, userId) {
+final profileProvider = FutureProvider.autoDispose.family<UserProfile, String>((
+  ref,
+  userId,
+) {
   return ref.watch(profileRepositoryProvider).getProfile(userId);
 });
 
 final profileControllerProvider = StateNotifierProvider.autoDispose
     .family<ProfileController, AsyncValue<UserProfile?>, String>((ref, userId) {
-  return ProfileController(
-    repository: ref.watch(profileRepositoryProvider),
-    userId: userId,
-  );
-});
+      return ProfileController(
+        repository: ref.watch(profileRepositoryProvider),
+        userId: userId,
+      );
+    });
 
 class ProfileController extends StateNotifier<AsyncValue<UserProfile?>> {
-  ProfileController({
-    required this._repository,
-    required this._userId,
-  }) : super(const AsyncValue.loading()) {
+  ProfileController({required this._repository, required this._userId})
+    : super(const AsyncValue.loading()) {
     load();
   }
 

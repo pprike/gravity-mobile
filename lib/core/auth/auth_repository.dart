@@ -14,17 +14,14 @@ class LoginRequest {
   final String password;
 
   Map<String, dynamic> toJson() => {
-        "tenantSlug": tenantSlug,
-        "email": email,
-        "password": password,
-      };
+    "tenantSlug": tenantSlug,
+    "email": email,
+    "password": password,
+  };
 }
 
 class AuthRepository {
-  AuthRepository({
-    required this._apiClient,
-    required this._authStorage,
-  });
+  AuthRepository({required this._apiClient, required this._authStorage});
 
   final ApiClient _apiClient;
   final AuthStorage _authStorage;
@@ -43,7 +40,9 @@ class AuthRepository {
       refreshToken: data["refreshToken"] as String,
       expiresIn: data["expiresIn"] as int,
       user: AuthUser.fromJson(data["user"] as Map<String, dynamic>),
-      expiresAt: DateTime.now().add(Duration(seconds: data["expiresIn"] as int)),
+      expiresAt: DateTime.now().add(
+        Duration(seconds: data["expiresIn"] as int),
+      ),
     );
     await _authStorage.saveSession(session);
     return session;

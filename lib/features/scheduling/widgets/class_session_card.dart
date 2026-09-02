@@ -8,17 +8,20 @@ class ClassSessionCard extends StatelessWidget {
   const ClassSessionCard({
     super.key,
     required this.session,
-    required this.onBook,
-    this.isBooking = false,
+    this.onBook,
+    this.onWaitlist,
+    this.isBusy = false,
   });
 
   final ClassSession session;
   final VoidCallback? onBook;
-  final bool isBooking;
+  final VoidCallback? onWaitlist;
+  final bool isBusy;
 
   @override
   Widget build(BuildContext context) {
     final isBooked = session.bookedByMe;
+    final isWaitlisted = session.waitlistedByMe;
     final isFull = session.isFull && !isBooked;
 
     return Container(
@@ -74,29 +77,33 @@ class ClassSessionCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  "Coach",
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: GravityColors.gray600,
-                  ),
+                const Text(
+                  "Studio class",
+                  style: TextStyle(fontSize: 12, color: GravityColors.gray600),
                 ),
                 const SizedBox(height: 8),
                 _SpotsTag(
                   isFull: isFull,
                   spotsLeft: session.spotsLeft,
+                  waitlistCount: session.waitlistCount,
+                  waitlisted: isWaitlisted,
                 ),
               ],
             ),
           ),
           const SizedBox(width: GravitySpacing.sm),
           SizedBox(
-            width: 76,
-            child: _BookActionButton(
+            width: 82,
+            child: _ActionButton(
               isBooked: isBooked,
               isFull: isFull,
-              isLoading: isBooking,
-              onPressed: isBooked || isFull ? null : onBook,
+              isWaitlisted: isWaitlisted,
+              isLoading: isBusy,
+              onPressed: isBooked
+                  ? null
+                  : isWaitlisted || isFull
+                  ? onWaitlist
+                  : onBook,
             ),
           ),
         ],
@@ -106,41 +113,63 @@ class ClassSessionCard extends StatelessWidget {
 }
 
 class _SpotsTag extends StatelessWidget {
-  const _SpotsTag({required this.isFull, required this.spotsLeft});
+  const _SpotsTag({
+    required this.isFull,
+    required this.spotsLeft,
+    required this.waitlistCount,
+    required this.waitlisted,
+  });
 
   final bool isFull;
   final int spotsLeft;
+  final int waitlistCount;
+  final bool waitlisted;
 
   @override
   Widget build(BuildContext context) {
+    final label = waitlisted
+        ? "On waitlist"
+        : isFull
+        ? (waitlistCount > 0 ? "Waitlist ($waitlistCount)" : "Fully Booked")
+        : "$spotsLeft spots left";
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: isFull ? GravityColors.danger50 : GravityColors.primary50,
+        color: waitlisted
+            ? GravityColors.primary50
+            : isFull
+            ? GravityColors.danger50
+            : GravityColors.primary50,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
-        isFull ? "Fully Booked" : "$spotsLeft spots left",
+        label,
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: isFull ? GravityColors.danger600 : GravityColors.primary600,
+          color: waitlisted
+              ? GravityColors.primary600
+              : isFull
+              ? GravityColors.danger600
+              : GravityColors.primary600,
         ),
       ),
     );
   }
 }
 
-class _BookActionButton extends StatelessWidget {
-  const _BookActionButton({
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
     required this.isBooked,
     required this.isFull,
+    required this.isWaitlisted,
     required this.isLoading,
     this.onPressed,
   });
 
   final bool isBooked;
   final bool isFull;
+  final bool isWaitlisted;
   final bool isLoading;
   final VoidCallback? onPressed;
 
@@ -156,20 +185,27 @@ class _BookActionButton extends StatelessWidget {
       );
     }
 
-    final label = isBooked ? "Booked" : "Book";
-    final enabled = onPressed != null;
+    final label = isBooked
+        ? "Booked"
+        : isWaitlisted
+        ? "Leave"
+        : isFull
+        ? "Waitlist"
+        : "Book";
+    final enabled = onPressed != null && !isBooked;
 
     return TextButton(
-      onPressed: onPressed,
+      onPressed: enabled ? onPressed : null,
       style: TextButton.styleFrom(
-        backgroundColor:
-            enabled ? GravityColors.primary600 : GravityColors.neutral50,
+        backgroundColor: enabled
+            ? GravityColors.primary600
+            : GravityColors.neutral50,
         foregroundColor: enabled ? Colors.white : GravityColors.gray400,
+        disabledBackgroundColor: GravityColors.neutral50,
+        disabledForegroundColor: GravityColors.gray400,
         side: enabled ? null : const BorderSide(color: GravityColors.gray200),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
       ),
       child: Text(label),

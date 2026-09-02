@@ -14,7 +14,10 @@ class AuthUser {
   final List<String> roles;
 
   String get displayName {
-    final name = [firstName, lastName].where((part) => part?.isNotEmpty == true);
+    final name = [
+      firstName,
+      lastName,
+    ].where((part) => part?.isNotEmpty == true);
     if (name.isNotEmpty) return name.join(" ");
     return email;
   }

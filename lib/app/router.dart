@@ -25,14 +25,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: "/login",
-        builder: (context, state) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: "/",
-        builder: (context, state) => const HomeShell(),
-      ),
+      GoRoute(path: "/login", builder: (context, state) => const LoginScreen()),
+      GoRoute(path: "/", builder: (context, state) => const HomeShell()),
     ],
   );
 });

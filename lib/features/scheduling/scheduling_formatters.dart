@@ -45,7 +45,36 @@ class SchedulingFormatters {
     return "${_weekdays[date.weekday - 1]} ${date.day} ${_months[date.month - 1]}";
   }
 
+  static String popularClassMeta(DateTime startsAt, Duration duration) {
+    final today = DateTime.now();
+    final startDay = DateTime(startsAt.year, startsAt.month, startsAt.day);
+    final todayDay = DateTime(today.year, today.month, today.day);
+    final dayLabel = startDay == todayDay
+        ? "Today"
+        : startDay == todayDay.add(const Duration(days: 1))
+        ? "Tomorrow"
+        : weekdayShort(startsAt);
+    return "$dayLabel • ${timeOfDay(startsAt)} • ${durationLabel(duration)}";
+  }
+
+  static String heroTimeLabel(DateTime startsAt) {
+    final today = DateTime.now();
+    final startDay = DateTime(startsAt.year, startsAt.month, startsAt.day);
+    final todayDay = DateTime(today.year, today.month, today.day);
+    final dayLabel = startDay == todayDay
+        ? "Today"
+        : startDay == todayDay.add(const Duration(days: 1))
+        ? "Tomorrow"
+        : "${weekdayShort(startsAt)} ${startsAt.day}";
+    return "${timeOfDay(startsAt)} $dayLabel";
+  }
+
   static String bookingDateLabel(DateTime date) {
-    return "${weekdayShort(date)}, ${_months[date.month - 1]} ${date.day}";
+    final today = DateTime.now();
+    final startDay = DateTime(date.year, date.month, date.day);
+    final todayDay = DateTime(today.year, today.month, today.day);
+    if (startDay == todayDay) return "Today";
+    if (startDay == todayDay.add(const Duration(days: 1))) return "Tomorrow";
+    return "${weekdayShort(date)} ${date.day} ${_months[date.month - 1]}";
   }
 }

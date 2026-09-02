@@ -6,7 +6,7 @@ import "auth_session.dart";
 
 class AuthStorage {
   AuthStorage({FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage();
+    : _storage = storage ?? const FlutterSecureStorage();
 
   static const _sessionKey = "gravity_auth_session";
   final FlutterSecureStorage _storage;

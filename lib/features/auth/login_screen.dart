@@ -16,8 +16,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   static const _defaultTenant = "tenant-a";
 
-  final _emailController =
-      TextEditingController(text: "member@tenant-a.com");
+  final _emailController = TextEditingController(text: "member@tenant-a.com");
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -33,8 +32,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String _tenantDisplayName() {
     return _defaultTenant
         .split("-")
-        .map((part) =>
-            part.isEmpty ? part : part[0].toUpperCase() + part.substring(1))
+        .map(
+          (part) =>
+              part.isEmpty ? part : part[0].toUpperCase() + part.substring(1),
+        )
         .join(" ");
   }
 
@@ -45,7 +46,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     try {
-      await ref.read(authRepositoryProvider).login(
+      await ref
+          .read(authRepositoryProvider)
+          .login(
             LoginRequest(
               tenantSlug: _defaultTenant,
               email: _emailController.text.trim(),
@@ -137,8 +140,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           decoration: BoxDecoration(
                             color: GravityColors.danger50,
-                            borderRadius:
-                                BorderRadius.circular(GravityRadii.md),
+                            borderRadius: BorderRadius.circular(
+                              GravityRadii.md,
+                            ),
                           ),
                           child: Text(
                             _error!,
@@ -163,12 +167,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: GravityColors.primary600,
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor:
-                            GravityColors.primary600.withValues(alpha: 0.6),
+                        disabledBackgroundColor: GravityColors.primary600
+                            .withValues(alpha: 0.6),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(GravityRadii.button),
+                          borderRadius: BorderRadius.circular(
+                            GravityRadii.button,
+                          ),
                         ),
                       ),
                       child: _isLoading

@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
+import "package:google_fonts/google_fonts.dart";
 
 import "design_tokens.dart";
 
@@ -37,74 +38,72 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: Colors.white,
-        indicatorColor: GravityColors.primary50,
+        indicatorColor: Colors.transparent,
         elevation: 0,
-        height: 72,
+        height: 64,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return TextStyle(
-            fontSize: 12,
+            fontSize: 10,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-            color: selected
-                ? GravityColors.primary700
-                : GravityColors.neutral600,
+            color: selected ? GravityColors.primary600 : GravityColors.gray400,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return IconThemeData(
-            color: selected
-                ? GravityColors.primary600
-                : GravityColors.neutral500,
+            color: selected ? GravityColors.primary600 : GravityColors.gray400,
             size: 22,
           );
         }),
       ),
-      textTheme: const TextTheme(
-        headlineMedium: TextStyle(
-          fontSize: 30,
-          fontWeight: FontWeight.w600,
-          letterSpacing: -0.5,
-          color: GravityColors.neutral900,
-        ),
-        headlineSmall: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.w600,
-          letterSpacing: -0.25,
-          color: GravityColors.neutral900,
-        ),
-        titleLarge: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: GravityColors.neutral900,
-        ),
-        titleMedium: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: GravityColors.neutral900,
-        ),
-        titleSmall: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: GravityColors.neutral900,
-        ),
-        bodyLarge: TextStyle(
-          fontSize: 16,
-          height: 1.5,
-          color: GravityColors.neutral800,
-        ),
-        bodyMedium: TextStyle(
-          fontSize: 14,
-          height: 1.5,
-          color: GravityColors.neutral700,
-        ),
-        labelMedium: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: GravityColors.neutral600,
+      textTheme: GoogleFonts.interTextTheme(
+        const TextTheme(
+          headlineMedium: TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.5,
+            color: GravityColors.neutral900,
+          ),
+          headlineSmall: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.25,
+            color: GravityColors.neutral900,
+          ),
+          titleLarge: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: GravityColors.neutral900,
+          ),
+          titleMedium: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: GravityColors.neutral900,
+          ),
+          titleSmall: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: GravityColors.neutral900,
+          ),
+          bodyLarge: TextStyle(
+            fontSize: 16,
+            height: 1.5,
+            color: GravityColors.neutral800,
+          ),
+          bodyMedium: TextStyle(
+            fontSize: 14,
+            height: 1.5,
+            color: GravityColors.neutral700,
+          ),
+          labelMedium: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: GravityColors.neutral600,
+          ),
         ),
       ),
-      dividerColor: GravityColors.neutral200,
+      dividerColor: GravityColors.gray200,
       cardTheme: CardThemeData(
         color: Colors.white,
         elevation: 0,
@@ -144,10 +143,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(GravityRadii.md),
           ),
-          textStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -158,10 +154,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(GravityRadii.md),
           ),
-          textStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
       ),
     );

@@ -13,20 +13,27 @@ final scheduleDayProvider = StateProvider<DateTime>((ref) {
   return DateTime(now.year, now.month, now.day);
 });
 
-final classSessionsProvider =
-    FutureProvider.autoDispose<List<ClassSession>>((ref) async {
+final classSessionsProvider = FutureProvider.autoDispose<List<ClassSession>>((
+  ref,
+) async {
   final selectedDay = ref.watch(scheduleDayProvider);
   final repository = ref.watch(schedulingRepositoryProvider);
-  final start = DateTime(
-    selectedDay.year,
-    selectedDay.month,
-    selectedDay.day,
-  );
+  final start = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
   final end = start.add(const Duration(days: 1));
   return repository.listSessions(from: start, to: end);
 });
 
 final upcomingBookingsProvider =
     FutureProvider.autoDispose<List<UpcomingBooking>>((ref) {
-  return ref.watch(schedulingRepositoryProvider).listUpcomingBookings();
+      return ref.watch(schedulingRepositoryProvider).listUpcomingBookings();
+    });
+
+final weekSessionsProvider = FutureProvider.autoDispose<List<ClassSession>>((
+  ref,
+) {
+  final now = DateTime.now();
+  final start = DateTime(now.year, now.month, now.day);
+  return ref
+      .watch(schedulingRepositoryProvider)
+      .listSessions(from: start, to: start.add(const Duration(days: 7)));
 });

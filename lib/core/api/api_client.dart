@@ -39,20 +39,18 @@ class ApiErrorBody {
 }
 
 class ApiClient {
-  ApiClient({
-    required AppConfig config,
-    required this._authStorage,
-    Dio? dio,
-  })  : _config = config,
-        _dio = dio ??
-            Dio(
-              BaseOptions(
-                baseUrl: config.apiBaseUrl,
-                connectTimeout: const Duration(seconds: 15),
-                receiveTimeout: const Duration(seconds: 15),
-                headers: {"Content-Type": "application/json"},
-              ),
-            ) {
+  ApiClient({required AppConfig config, required this._authStorage, Dio? dio})
+    : _config = config,
+      _dio =
+          dio ??
+          Dio(
+            BaseOptions(
+              baseUrl: config.apiBaseUrl,
+              connectTimeout: const Duration(seconds: 15),
+              receiveTimeout: const Duration(seconds: 15),
+              headers: {"Content-Type": "application/json"},
+            ),
+          ) {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -67,7 +65,8 @@ class ApiClient {
             final refreshed = await _tryRefreshToken();
             if (refreshed != null) {
               final request = error.requestOptions;
-              request.headers["Authorization"] = "Bearer ${refreshed.accessToken}";
+              request.headers["Authorization"] =
+                  "Bearer ${refreshed.accessToken}";
               try {
                 final response = await _dio.fetch(request);
                 handler.resolve(response);
@@ -95,9 +94,7 @@ class ApiClient {
     if (session?.refreshToken == null) return null;
 
     try {
-      final response = await Dio(
-        BaseOptions(baseUrl: _config.apiBaseUrl),
-      ).post(
+      final response = await Dio(BaseOptions(baseUrl: _config.apiBaseUrl)).post(
         "/api/v1/auth/refresh",
         data: {"refreshToken": session!.refreshToken},
       );
@@ -179,6 +176,32 @@ class ApiClient {
     required T Function(Object? json) fromJson,
   }) {
     return _request("DELETE", path, fromJson: fromJson);
+  }
+
+  Future<void> deleteVoid(String path) async {
+    try {
+      final response = await _dio.delete(path);
+      if (response.statusCode == 204 ||
+          response.data == null ||
+          response.data == "") {
+        return;
+      }
+      if (response.data is Map<String, dynamic>) {
+        final envelope = ApiEnvelope<dynamic>.fromJson(
+          response.data as Map<String, dynamic>,
+          (json) => json,
+        );
+        if (envelope.error != null) {
+          throw ApiException(
+            message: envelope.error!.message,
+            code: envelope.error!.code,
+            statusCode: response.statusCode,
+          );
+        }
+      }
+    } on DioException catch (error) {
+      throw _mapDioError(error);
+    }
   }
 
   Future<T> upload<T>(

@@ -21,8 +21,10 @@ abstract final class GravityColors {
   // Figma mobile palette (Tailwind gray scale used in designs)
   static const gray200 = Color(0xFFE5E7EB);
   static const gray400 = Color(0xFF9CA3AF);
+  static const gray500 = Color(0xFF6B7280);
   static const gray600 = Color(0xFF4B5563);
   static const gray900 = Color(0xFF111827);
+  static const mint100 = Color(0xFFD1FAE5);
 
   static const success600 = Color(0xFF16A34A);
   static const warning600 = Color(0xFFD97706);

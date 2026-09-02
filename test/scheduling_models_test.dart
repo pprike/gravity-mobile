@@ -21,6 +21,25 @@ void main() {
       expect(session.bookedByMe, isTrue);
     });
 
+    test("parses waitlist fields on a full class session", () {
+      final session = ClassSession.fromJson({
+        "id": "88888888-8888-8888-8888-888888888888",
+        "name": "HIIT",
+        "startsAt": "2026-08-08T11:00:00Z",
+        "endsAt": "2026-08-08T12:00:00Z",
+        "capacity": 12,
+        "bookedCount": 12,
+        "status": "scheduled",
+        "bookedByMe": false,
+        "waitlistedByMe": true,
+        "waitlistCount": 3,
+      });
+
+      expect(session.isFull, isTrue);
+      expect(session.waitlistedByMe, isTrue);
+      expect(session.waitlistCount, 3);
+    });
+
     test("parses upcoming booking from API", () {
       final booking = UpcomingBooking.fromJson({
         "bookingId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",

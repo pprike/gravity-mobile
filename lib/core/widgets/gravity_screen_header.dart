@@ -34,19 +34,19 @@ class GravityScreenHeader extends StatelessWidget {
         Text(
           title,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: GravityColors.neutral900,
-                letterSpacing: -0.5,
-              ),
+            fontWeight: FontWeight.w600,
+            color: GravityColors.neutral900,
+            letterSpacing: -0.5,
+          ),
         ),
         if (subtitle != null) ...[
           const SizedBox(height: GravitySpacing.sm),
           Text(
             subtitle!,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: GravityColors.neutral600,
-                  height: 1.5,
-                ),
+              color: GravityColors.neutral600,
+              height: 1.5,
+            ),
           ),
         ],
       ],

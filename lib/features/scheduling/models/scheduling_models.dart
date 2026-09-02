@@ -9,6 +9,8 @@ class ClassSession {
     required this.bookedCount,
     required this.status,
     required this.bookedByMe,
+    this.waitlistedByMe = false,
+    this.waitlistCount = 0,
     this.coachUserId,
     this.locationId,
   });
@@ -22,6 +24,8 @@ class ClassSession {
   final int bookedCount;
   final String status;
   final bool bookedByMe;
+  final bool waitlistedByMe;
+  final int waitlistCount;
   final String? coachUserId;
   final String? locationId;
 
@@ -42,6 +46,8 @@ class ClassSession {
       bookedCount: json["bookedCount"] as int,
       status: json["status"] as String,
       bookedByMe: json["bookedByMe"] as bool? ?? false,
+      waitlistedByMe: json["waitlistedByMe"] as bool? ?? false,
+      waitlistCount: json["waitlistCount"] as int? ?? 0,
       coachUserId: json["coachUserId"] as String?,
       locationId: json["locationId"] as String?,
     );
@@ -107,6 +113,29 @@ class UpcomingBooking {
       sessionStatus: json["sessionStatus"] as String,
       locationId: json["locationId"] as String?,
       coachUserId: json["coachUserId"] as String?,
+    );
+  }
+}
+
+class WaitlistStatus {
+  const WaitlistStatus({
+    required this.sessionId,
+    required this.userId,
+    required this.status,
+    required this.position,
+  });
+
+  final String sessionId;
+  final String userId;
+  final String status;
+  final int position;
+
+  factory WaitlistStatus.fromJson(Map<String, dynamic> json) {
+    return WaitlistStatus(
+      sessionId: json["sessionId"] as String,
+      userId: json["userId"] as String,
+      status: json["status"] as String,
+      position: json["position"] as int? ?? 0,
     );
   }
 }

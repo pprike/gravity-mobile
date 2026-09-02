@@ -89,11 +89,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final emergencyPhone = _emergencyPhoneController.text.trim();
 
     try {
-      await ref.read(profileControllerProvider(userId).notifier).save(
+      await ref
+          .read(profileControllerProvider(userId).notifier)
+          .save(
             UpdateProfileRequest(
               displayName: _displayNameController.text.trim(),
               phone: _phoneController.text.trim(),
-              emergencyContact: (emergencyName.isEmpty && emergencyPhone.isEmpty)
+              emergencyContact:
+                  (emergencyName.isEmpty && emergencyPhone.isEmpty)
                   ? null
                   : {
                       if (emergencyName.isNotEmpty) "name": emergencyName,
@@ -205,8 +208,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   CircleAvatar(
                     radius: 48,
                     backgroundColor: GravityColors.neutral200,
-                    backgroundImage:
-                        avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+                    backgroundImage: avatarUrl.isNotEmpty
+                        ? NetworkImage(avatarUrl)
+                        : null,
                     child: avatarUrl.isEmpty
                         ? Text(
                             (member?.displayName ?? session.user.displayName)
@@ -244,8 +248,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: Text(
                 session.user.email,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: GravityColors.neutral600,
-                    ),
+                  color: GravityColors.neutral600,
+                ),
               ),
             ),
             const SizedBox(height: GravitySpacing.lg),
@@ -308,17 +312,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             onPressed: _isSaving
                                 ? null
                                 : () => setState(() {
-                                      _isEditing = false;
-                                      _populateFields(member);
-                                    }),
+                                    _isEditing = false;
+                                    _populateFields(member);
+                                  }),
                           ),
                         ),
                         const SizedBox(width: GravitySpacing.sm),
                         Expanded(
                           child: GravityButton(
                             label: "Save",
-                            onPressed:
-                                _isSaving ? null : () => _save(session.user.id),
+                            onPressed: _isSaving
+                                ? null
+                                : () => _save(session.user.id),
                             isLoading: _isSaving,
                           ),
                         ),
@@ -336,10 +341,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       value: member.displayName ?? "—",
                     ),
                     const Divider(height: GravitySpacing.lg),
-                    _ProfileField(
-                      label: "Phone",
-                      value: member.phone ?? "—",
-                    ),
+                    _ProfileField(label: "Phone", value: member.phone ?? "—"),
                   ],
                 ),
               ),
@@ -403,16 +405,13 @@ class _ProfileField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelMedium,
-        ),
+        Text(label, style: Theme.of(context).textTheme.labelMedium),
         const SizedBox(height: 4),
         Text(
           value,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
         ),
       ],
     );

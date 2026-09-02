@@ -47,10 +47,7 @@ class GravityInput extends StatelessWidget {
           textInputAction: textInputAction,
           onSubmitted: onSubmitted,
           autofillHints: autofillHints,
-          style: const TextStyle(
-            fontSize: 14,
-            color: GravityColors.neutral900,
-          ),
+          style: const TextStyle(fontSize: 14, color: GravityColors.neutral900),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: GravityColors.neutral500),

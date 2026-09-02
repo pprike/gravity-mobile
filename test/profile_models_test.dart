@@ -12,10 +12,7 @@ void main() {
           "displayName": "Alex Rivera",
           "phone": "+15551234567",
           "avatarUrl": "/uploads/profiles/avatar.png",
-          "emergencyContact": {
-            "name": "Sam Rivera",
-            "phone": "+15559876543",
-          },
+          "emergencyContact": {"name": "Sam Rivera", "phone": "+15559876543"},
         },
       });
 
@@ -30,23 +27,14 @@ void main() {
       const request = UpdateProfileRequest(
         displayName: "Alex Rivera",
         phone: "+15551234567",
-        emergencyContact: {
-          "name": "Sam Rivera",
-          "phone": "+15559876543",
-        },
+        emergencyContact: {"name": "Sam Rivera", "phone": "+15559876543"},
       );
 
-      expect(
-        request.toJson(),
-        {
-          "displayName": "Alex Rivera",
-          "phone": "+15551234567",
-          "emergencyContact": {
-            "name": "Sam Rivera",
-            "phone": "+15559876543",
-          },
-        },
-      );
+      expect(request.toJson(), {
+        "displayName": "Alex Rivera",
+        "phone": "+15551234567",
+        "emergencyContact": {"name": "Sam Rivera", "phone": "+15559876543"},
+      });
     });
   });
 }

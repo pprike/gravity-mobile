@@ -51,18 +51,18 @@ class GravityEmptyState extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: GravityColors.neutral900,
-                ),
+              fontWeight: FontWeight.w600,
+              color: GravityColors.neutral900,
+            ),
           ),
           const SizedBox(height: GravitySpacing.sm),
           Text(
             description,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: GravityColors.neutral600,
-                  height: 1.5,
-                ),
+              color: GravityColors.neutral600,
+              height: 1.5,
+            ),
           ),
           if (actionLabel != null && onAction != null) ...[
             const SizedBox(height: GravitySpacing.lg),

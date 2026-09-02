@@ -30,7 +30,8 @@ class SchedulingRepository {
   Future<List<UpcomingBooking>> listUpcomingBookings() {
     return _apiClient.getList(
       "/api/v1/class-bookings/upcoming",
-      fromJson: (json) => UpcomingBooking.fromJson(json as Map<String, dynamic>),
+      fromJson: (json) =>
+          UpcomingBooking.fromJson(json as Map<String, dynamic>),
     );
   }
 
@@ -39,5 +40,16 @@ class SchedulingRepository {
       "/api/v1/class-bookings/$bookingId",
       fromJson: (json) => ClassBooking.fromJson(json as Map<String, dynamic>),
     );
+  }
+
+  Future<WaitlistStatus> joinWaitlist(String sessionId) {
+    return _apiClient.post(
+      "/api/v1/class-sessions/$sessionId/waitlist",
+      fromJson: (json) => WaitlistStatus.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  Future<void> leaveWaitlist(String sessionId) {
+    return _apiClient.deleteVoid("/api/v1/class-sessions/$sessionId/waitlist");
   }
 }

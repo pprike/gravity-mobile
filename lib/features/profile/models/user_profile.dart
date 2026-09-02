@@ -24,11 +24,7 @@ class MemberProfileData {
 }
 
 class UserProfile {
-  const UserProfile({
-    required this.userId,
-    required this.roles,
-    this.member,
-  });
+  const UserProfile({required this.userId, required this.roles, this.member});
 
   final String userId;
   final List<String> roles;
@@ -38,7 +34,9 @@ class UserProfile {
     return UserProfile(
       userId: json["userId"] as String,
       roles: (json["roles"] as List<dynamic>).map((e) => e as String).toList(),
-      member: MemberProfileData.fromJson(json["member"] as Map<String, dynamic>?),
+      member: MemberProfileData.fromJson(
+        json["member"] as Map<String, dynamic>?,
+      ),
     );
   }
 }

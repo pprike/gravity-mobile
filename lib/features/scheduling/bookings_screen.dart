@@ -69,121 +69,127 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   Widget build(BuildContext context) {
     final bookingsAsync = ref.watch(upcomingBookingsProvider);
 
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            GravitySpacing.lg,
+            GravitySpacing.lg,
+            GravitySpacing.lg,
+            GravitySpacing.sm,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Bookings",
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: GravitySpacing.sm),
+              Text(
+                "View and manage your upcoming sessions.",
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: GravityColors.gray600),
+              ),
+            ],
+          ),
+        ),
+        if (_error != null)
           Padding(
-            padding: const EdgeInsets.all(GravitySpacing.lg),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Bookings", style: Theme.of(context).textTheme.headlineSmall),
-                const SizedBox(height: GravitySpacing.sm),
-                Text(
-                  "View and manage your upcoming sessions.",
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: GravityColors.neutral600,
-                      ),
-                ),
-              ],
+            padding: const EdgeInsets.symmetric(horizontal: GravitySpacing.lg),
+            child: Text(
+              _error!,
+              style: const TextStyle(color: GravityColors.danger600),
             ),
           ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: GravitySpacing.lg),
-              child: Text(
-                _error!,
-                style: const TextStyle(color: GravityColors.danger600),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(upcomingBookingsProvider);
+              await ref.read(upcomingBookingsProvider.future);
+            },
+            child: bookingsAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  GravityEmptyState(
+                    icon: Icons.error_outline,
+                    title: "Could not load bookings",
+                    description: error.toString(),
+                  ),
+                ],
               ),
-            ),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                ref.invalidate(upcomingBookingsProvider);
-                await ref.read(upcomingBookingsProvider.future);
-              },
-              child: bookingsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  children: [
-                    GravityEmptyState(
-                      icon: Icons.error_outline,
-                      title: "Could not load bookings",
-                      description: error.toString(),
-                    ),
-                  ],
-                ),
-                data: (bookings) {
-                  if (bookings.isEmpty) {
-                    return ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: const [
-                        GravityEmptyState(
-                          icon: Icons.event_note_outlined,
-                          title: "No bookings yet",
-                          description:
-                              "Browse the schedule to book your next class.",
-                        ),
-                      ],
-                    );
-                  }
-
-                  return ListView.separated(
+              data: (bookings) {
+                if (bookings.isEmpty) {
+                  return ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(GravitySpacing.lg),
-                    itemCount: bookings.length,
-                    separatorBuilder: (_, index) =>
-                        const SizedBox(height: GravitySpacing.md),
-                    itemBuilder: (context, index) {
-                      final booking = bookings[index];
-                      final isCancelledSession =
-                          booking.sessionStatus == "cancelled";
-                      return GravityCard(
-                        padding: const EdgeInsets.all(GravitySpacing.md),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              booking.className,
-                              style: Theme.of(context).textTheme.titleSmall,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "${SchedulingFormatters.bookingDateLabel(booking.startsAt)} · "
-                              "${SchedulingFormatters.timeOfDay(booking.startsAt)}",
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                            if (isCancelledSession) ...[
-                              const SizedBox(height: GravitySpacing.sm),
-                              const Text(
-                                "This class was cancelled by the studio.",
-                                style: TextStyle(color: GravityColors.danger600),
-                              ),
-                            ],
-                            const SizedBox(height: GravitySpacing.md),
-                            GravityButton(
-                              label: "Cancel booking",
-                              variant: GravityButtonVariant.secondary,
-                              isLoading:
-                                  _cancellingBookingId == booking.bookingId,
-                              onPressed: isCancelledSession
-                                  ? null
-                                  : () => _cancelBooking(booking),
-                              fullWidth: true,
+                    children: const [
+                      GravityEmptyState(
+                        icon: Icons.event_note_outlined,
+                        title: "No bookings yet",
+                        description:
+                            "Browse the schedule to book your next class.",
+                      ),
+                    ],
+                  );
+                }
+
+                return ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(GravitySpacing.lg),
+                  itemCount: bookings.length,
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(height: GravitySpacing.md),
+                  itemBuilder: (context, index) {
+                    final booking = bookings[index];
+                    final isCancelledSession =
+                        booking.sessionStatus == "cancelled";
+                    return GravityCard(
+                      padding: const EdgeInsets.all(GravitySpacing.md),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            booking.className,
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "${SchedulingFormatters.bookingDateLabel(booking.startsAt)} · "
+                            "${SchedulingFormatters.timeOfDay(booking.startsAt)}",
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          if (isCancelledSession) ...[
+                            const SizedBox(height: GravitySpacing.sm),
+                            const Text(
+                              "This class was cancelled by the studio.",
+                              style: TextStyle(color: GravityColors.danger600),
                             ),
                           ],
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
+                          const SizedBox(height: GravitySpacing.md),
+                          GravityButton(
+                            label: "Cancel booking",
+                            variant: GravityButtonVariant.secondary,
+                            isLoading:
+                                _cancellingBookingId == booking.bookingId,
+                            onPressed: isCancelledSession
+                                ? null
+                                : () => _cancelBooking(booking),
+                            fullWidth: true,
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

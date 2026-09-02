@@ -1,6 +1,7 @@
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
 import "../../core/providers/app_providers.dart";
+import "models/member_subscription.dart";
 import "models/user_profile.dart";
 import "profile_repository.dart";
 
@@ -8,8 +9,15 @@ final profileProvider = FutureProvider.autoDispose.family<UserProfile, String>((
   ref,
   userId,
 ) {
+  ref.watch(demoCatalogProvider);
   return ref.watch(profileRepositoryProvider).getProfile(userId);
 });
+
+final memberSubscriptionProvider = FutureProvider.autoDispose
+    .family<MemberSubscription?, String>((ref, userId) {
+      ref.watch(demoCatalogProvider);
+      return ref.watch(profileRepositoryProvider).getSubscription(userId);
+    });
 
 final profileControllerProvider = StateNotifierProvider.autoDispose
     .family<ProfileController, AsyncValue<UserProfile?>, String>((ref, userId) {

@@ -18,19 +18,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   final _emailController = TextEditingController(text: "member@tenant-a.com");
   final _passwordController = TextEditingController();
+  final _tenantController = TextEditingController(text: _defaultTenant);
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _showStudio = false;
   String? _error;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _tenantController.dispose();
     super.dispose();
   }
 
   String _tenantDisplayName() {
-    return _defaultTenant
+    final slug = _tenantController.text.trim().isEmpty
+        ? _defaultTenant
+        : _tenantController.text.trim();
+    const aliases = {
+      "tenant-a": "Iron Peak",
+      "iron-peak": "Iron Peak",
+      "ironpeak": "Iron Peak",
+    };
+    final mapped = aliases[slug.toLowerCase()];
+    if (mapped != null) return mapped;
+    return slug
         .split("-")
         .map(
           (part) =>
@@ -47,15 +60,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       await ref
-          .read(authRepositoryProvider)
+          .read(authSessionProvider.notifier)
           .login(
             LoginRequest(
-              tenantSlug: _defaultTenant,
+              tenantSlug: _tenantController.text.trim().isEmpty
+                  ? _defaultTenant
+                  : _tenantController.text.trim(),
               email: _emailController.text.trim(),
               password: _passwordController.text,
             ),
           );
-      ref.invalidate(authSessionProvider);
     } on ApiException catch (error) {
       setState(() => _error = error.message);
     } catch (_) {
@@ -63,6 +77,83 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _exploreDemo() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      await ref.read(authSessionProvider.notifier).loginDemo();
+    } catch (_) {
+      setState(() => _error = "Couldn't open the demo studio.");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showForgotPassword() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            24,
+            16,
+            24,
+            MediaQuery.paddingOf(context).bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: GravityColors.gray200,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Reset your password",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: GravityColors.gray900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                "Password resets are handled by your studio. Email the front desk and they’ll send a new invite link.",
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.5,
+                  color: GravityColors.gray600,
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Got it"),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -111,11 +202,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          onPressed: () =>
+                              setState(() => _showStudio = !_showStudio),
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            _showStudio
+                                ? "Hide studio ID"
+                                : "Sign in to a different studio",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: GravityColors.gray500,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (_showStudio) ...[
+                        const SizedBox(height: 12),
+                        _LoginField(
+                          label: "Studio ID",
+                          controller: _tenantController,
+                          textInputAction: TextInputAction.next,
+                        ),
+                      ],
+                      const SizedBox(height: 8),
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () {},
+                          onPressed: _showForgotPassword,
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
                             minimumSize: Size.zero,
@@ -194,7 +316,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 52,
+                    child: OutlinedButton(
+                      onPressed: _isLoading ? null : _exploreDemo,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: GravityColors.gray900,
+                        side: const BorderSide(color: GravityColors.gray200),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            GravityRadii.button,
+                          ),
+                        ),
+                      ),
+                      child: const Text(
+                        "Explore demo studio",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   const _SupportFooter(),
                   const SizedBox(height: 24),
                 ],
@@ -217,16 +362,39 @@ class _BrandingHeader extends StatelessWidget {
     return Column(
       children: [
         Container(
-          width: 64,
-          height: 64,
+          width: 72,
+          height: 72,
           decoration: BoxDecoration(
             color: GravityColors.primary50,
             borderRadius: BorderRadius.circular(GravityRadii.logo),
           ),
-          child: const Icon(
-            Icons.arrow_upward_rounded,
-            size: 36,
-            color: GravityColors.primary600,
+          child: const Center(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: "A",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: GravityColors.primary600,
+                      height: 1,
+                    ),
+                  ),
+                  WidgetSpan(
+                    alignment: PlaceholderAlignment.middle,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 1, bottom: 10),
+                      child: Icon(
+                        Icons.arrow_upward_rounded,
+                        size: 18,
+                        color: GravityColors.primary600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
         const SizedBox(height: GravitySpacing.md),
@@ -360,7 +528,13 @@ class _SupportFooter extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         TextButton(
-          onPressed: () {},
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Email support@ironpeakfitness.com"),
+              ),
+            );
+          },
           style: TextButton.styleFrom(
             padding: EdgeInsets.zero,
             minimumSize: Size.zero,

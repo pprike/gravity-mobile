@@ -38,9 +38,11 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
         indicatorColor: Colors.transparent,
         elevation: 0,
-        height: 64,
+        height: 72,
+        shadowColor: Colors.transparent,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return TextStyle(
@@ -103,7 +105,20 @@ class AppTheme {
           ),
         ),
       ),
-      dividerColor: GravityColors.gray200,
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: GravityColors.gray900,
+        contentTextStyle: const TextStyle(color: Colors.white, fontSize: 14),
+        insetPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(GravityRadii.md),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(GravityRadii.xl),
+        ),
+      ),
       cardTheme: CardThemeData(
         color: Colors.white,
         elevation: 0,

@@ -1,4 +1,5 @@
 import "../api/api_client.dart";
+import "../demo/demo_catalog.dart";
 import "auth_session.dart";
 import "auth_storage.dart";
 
@@ -21,10 +22,15 @@ class LoginRequest {
 }
 
 class AuthRepository {
-  AuthRepository({required this._apiClient, required this._authStorage});
+  AuthRepository({
+    required this._apiClient,
+    required this._authStorage,
+    required this._demoCatalog,
+  });
 
   final ApiClient _apiClient;
   final AuthStorage _authStorage;
+  final DemoCatalog _demoCatalog;
 
   Future<AuthSession?> currentSession() => _authStorage.readSession();
 
@@ -48,9 +54,16 @@ class AuthRepository {
     return session;
   }
 
+  Future<AuthSession> loginDemo() async {
+    _demoCatalog.reset();
+    final session = _demoCatalog.session;
+    await _authStorage.saveSession(session);
+    return session;
+  }
+
   Future<void> logout() async {
     final session = await _authStorage.readSession();
-    if (session != null) {
+    if (session != null && !session.isDemo) {
       try {
         await _apiClient.post<dynamic>(
           "/api/v1/auth/logout",

@@ -17,14 +17,16 @@ Flutter member app for the [Gravity](https://github.com/pprike/gravity-docs) mul
 - go_router (navigation)
 - Dio (HTTP client)
 
-## Features (Sprint 4)
+## Features
 
 - Member login against `gravity-service` (defaults to `member@tenant-a.com`)
-- Home shell with 5-tab bottom navigation
-- Profile view, edit, and avatar upload (Sprint 3 / GRA-113)
-- Class schedule browse with day slider and book flow (GRA-70 / US-18)
-- Upcoming bookings list on dashboard and Bookings tab (GRA-74 / US-20)
-- Cancel booking with policy feedback (GRA-71 / US-19)
+- **Explore demo studio** — full member flows without a backend
+- Home shell with 5-tab bottom navigation and notification inbox
+- Profile view, edit, membership card, and notification preferences
+- Class schedule with day slider, studio filter, class detail, book, and waitlist
+- Upcoming bookings with cancel and check-in
+- Community tab: studio announcements + group chat
+- Time-locked QR check-in
 
 ## Local development
 

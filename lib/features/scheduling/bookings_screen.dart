@@ -4,8 +4,9 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 import "../../core/api/api_exception.dart";
 import "../../core/theme/design_tokens.dart";
 import "../../core/widgets/gravity_button.dart";
-import "../../core/widgets/gravity_card.dart";
 import "../../core/widgets/gravity_empty_state.dart";
+import "../../core/widgets/gravity_feedback.dart";
+import "../check_in/check_in_sheet.dart";
 import "models/scheduling_models.dart";
 import "scheduling_formatters.dart";
 import "scheduling_providers.dart";
@@ -19,47 +20,43 @@ class BookingsScreen extends ConsumerStatefulWidget {
 
 class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   String? _cancellingBookingId;
-  String? _error;
 
   Future<void> _cancelBooking(UpcomingBooking booking) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await GravityFeedback.confirm(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Cancel booking?"),
-        content: Text(
+      title: "Cancel booking?",
+      message:
           "Cancel your spot for ${booking.className} on "
           "${SchedulingFormatters.bookingDateLabel(booking.startsAt)}?",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Keep booking"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Cancel booking"),
-          ),
-        ],
-      ),
+      cancelLabel: "Keep booking",
+      confirmLabel: "Cancel booking",
+      destructive: true,
     );
+    if (!confirmed || !mounted) return;
 
-    if (confirmed != true || !mounted) return;
-
-    setState(() {
-      _cancellingBookingId = booking.bookingId;
-      _error = null;
-    });
-
+    setState(() => _cancellingBookingId = booking.bookingId);
     try {
       await ref
           .read(schedulingRepositoryProvider)
           .cancelBooking(booking.bookingId);
       ref.invalidate(upcomingBookingsProvider);
       ref.invalidate(classSessionsProvider);
+      ref.invalidate(weekSessionsProvider);
+      if (mounted) {
+        GravityFeedback.showSnack(context, message: "Booking cancelled");
+      }
     } on ApiException catch (error) {
-      setState(() => _error = error.message);
+      if (mounted) {
+        GravityFeedback.showSnack(context, message: error.message, error: true);
+      }
     } catch (error) {
-      setState(() => _error = error.toString());
+      if (mounted) {
+        GravityFeedback.showSnack(
+          context,
+          message: error.toString(),
+          error: true,
+        );
+      }
     } finally {
       if (mounted) setState(() => _cancellingBookingId = null);
     }
@@ -72,38 +69,27 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            GravitySpacing.lg,
-            GravitySpacing.lg,
-            GravitySpacing.lg,
-            GravitySpacing.sm,
-          ),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 "Bookings",
-                style: Theme.of(context).textTheme.headlineSmall,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: GravityColors.gray900,
+                ),
               ),
-              const SizedBox(height: GravitySpacing.sm),
+              SizedBox(height: 6),
               Text(
-                "View and manage your upcoming sessions.",
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(color: GravityColors.gray600),
+                "Upcoming sessions you’ve reserved.",
+                style: TextStyle(fontSize: 14, color: GravityColors.gray600),
               ),
             ],
           ),
         ),
-        if (_error != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: GravitySpacing.lg),
-            child: Text(
-              _error!,
-              style: const TextStyle(color: GravityColors.danger600),
-            ),
-          ),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async {
@@ -119,6 +105,8 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                     icon: Icons.error_outline,
                     title: "Could not load bookings",
                     description: error.toString(),
+                    actionLabel: "Retry",
+                    onAction: () => ref.invalidate(upcomingBookingsProvider),
                   ),
                 ],
               ),
@@ -139,49 +127,21 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
 
                 return ListView.separated(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(GravitySpacing.lg),
+                  padding: const EdgeInsets.fromLTRB(
+                    GravitySpacing.lg,
+                    GravitySpacing.lg,
+                    GravitySpacing.lg,
+                    40,
+                  ),
                   itemCount: bookings.length,
                   separatorBuilder: (_, _) =>
                       const SizedBox(height: GravitySpacing.md),
                   itemBuilder: (context, index) {
-                    final booking = bookings[index];
-                    final isCancelledSession =
-                        booking.sessionStatus == "cancelled";
-                    return GravityCard(
-                      padding: const EdgeInsets.all(GravitySpacing.md),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            booking.className,
-                            style: Theme.of(context).textTheme.titleSmall,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "${SchedulingFormatters.bookingDateLabel(booking.startsAt)} · "
-                            "${SchedulingFormatters.timeOfDay(booking.startsAt)}",
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          if (isCancelledSession) ...[
-                            const SizedBox(height: GravitySpacing.sm),
-                            const Text(
-                              "This class was cancelled by the studio.",
-                              style: TextStyle(color: GravityColors.danger600),
-                            ),
-                          ],
-                          const SizedBox(height: GravitySpacing.md),
-                          GravityButton(
-                            label: "Cancel booking",
-                            variant: GravityButtonVariant.secondary,
-                            isLoading:
-                                _cancellingBookingId == booking.bookingId,
-                            onPressed: isCancelledSession
-                                ? null
-                                : () => _cancelBooking(booking),
-                            fullWidth: true,
-                          ),
-                        ],
-                      ),
+                    return _BookingCard(
+                      booking: bookings[index],
+                      cancelling:
+                          _cancellingBookingId == bookings[index].bookingId,
+                      onCancel: () => _cancelBooking(bookings[index]),
                     );
                   },
                 );
@@ -190,6 +150,113 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _BookingCard extends StatelessWidget {
+  const _BookingCard({
+    required this.booking,
+    required this.cancelling,
+    required this.onCancel,
+  });
+
+  final UpcomingBooking booking;
+  final bool cancelling;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final cancelled = booking.isCancelledSession;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(GravityRadii.lg),
+        border: Border.all(color: GravityColors.gray200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  booking.className,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: GravityColors.gray900,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: cancelled
+                      ? GravityColors.danger50
+                      : GravityColors.primary50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  cancelled ? "Cancelled" : "Confirmed",
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: cancelled
+                        ? GravityColors.danger600
+                        : GravityColors.primary700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "${SchedulingFormatters.bookingDateLabel(booking.startsAt)} · "
+            "${SchedulingFormatters.timeOfDay(booking.startsAt)} · "
+            "${SchedulingFormatters.durationLabel(booking.duration)}",
+            style: const TextStyle(fontSize: 13, color: GravityColors.gray600),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            [
+              if (booking.coachName != null) booking.coachName,
+              if (booking.locationName != null) booking.locationName,
+            ].join(" · "),
+            style: const TextStyle(fontSize: 13, color: GravityColors.gray500),
+          ),
+          if (cancelled) ...[
+            const SizedBox(height: GravitySpacing.sm),
+            const Text(
+              "This class was cancelled by the studio.",
+              style: TextStyle(color: GravityColors.danger600, fontSize: 13),
+            ),
+          ],
+          const SizedBox(height: GravitySpacing.md),
+          Row(
+            children: [
+              Expanded(
+                child: GravityButton(
+                  label: "Check in",
+                  icon: Icons.qr_code_2_rounded,
+                  variant: GravityButtonVariant.secondary,
+                  onPressed: cancelled ? null : () => showCheckInSheet(context),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: GravityButton(
+                  label: "Cancel",
+                  variant: GravityButtonVariant.destructive,
+                  isLoading: cancelling,
+                  onPressed: cancelled ? null : onCancel,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

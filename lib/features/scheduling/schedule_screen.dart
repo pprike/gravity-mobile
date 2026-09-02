@@ -4,6 +4,8 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 import "../../core/api/api_exception.dart";
 import "../../core/theme/design_tokens.dart";
 import "../../core/widgets/gravity_empty_state.dart";
+import "../../core/widgets/gravity_feedback.dart";
+import "class_detail_sheet.dart";
 import "models/scheduling_models.dart";
 import "scheduling_formatters.dart";
 import "scheduling_providers.dart";
@@ -18,72 +20,94 @@ class ScheduleScreen extends ConsumerStatefulWidget {
 
 class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   String? _busySessionId;
-  String? _error;
 
-  Future<void> _bookSession(String sessionId) async {
-    setState(() {
-      _busySessionId = sessionId;
-      _error = null;
-    });
-
+  Future<void> _bookSession(ClassSession session) async {
+    setState(() => _busySessionId = session.id);
     try {
-      await ref.read(schedulingRepositoryProvider).bookSession(sessionId);
-      ref.invalidate(classSessionsProvider);
-      ref.invalidate(upcomingBookingsProvider);
-      ref.invalidate(weekSessionsProvider);
+      await ref.read(schedulingRepositoryProvider).bookSession(session.id);
+      _invalidate();
+      if (mounted) {
+        GravityFeedback.showSnack(
+          context,
+          message: "You're booked for ${session.name}",
+        );
+      }
     } on ApiException catch (error) {
-      setState(() => _error = error.message);
+      if (mounted) {
+        GravityFeedback.showSnack(context, message: error.message, error: true);
+      }
     } catch (error) {
-      setState(() => _error = error.toString());
+      if (mounted) {
+        GravityFeedback.showSnack(
+          context,
+          message: error.toString(),
+          error: true,
+        );
+      }
     } finally {
       if (mounted) setState(() => _busySessionId = null);
     }
   }
 
   Future<void> _toggleWaitlist(ClassSession session) async {
-    setState(() {
-      _busySessionId = session.id;
-      _error = null;
-    });
-
+    setState(() => _busySessionId = session.id);
     try {
       final repository = ref.read(schedulingRepositoryProvider);
       if (session.waitlistedByMe) {
         await repository.leaveWaitlist(session.id);
+        if (mounted) {
+          GravityFeedback.showSnack(context, message: "Left the waitlist");
+        }
       } else {
         await repository.joinWaitlist(session.id);
+        if (mounted) {
+          GravityFeedback.showSnack(
+            context,
+            message: "You're on the waitlist for ${session.name}",
+          );
+        }
       }
-      ref.invalidate(classSessionsProvider);
-      ref.invalidate(weekSessionsProvider);
+      _invalidate();
     } on ApiException catch (error) {
-      setState(() => _error = error.message);
+      if (mounted) {
+        GravityFeedback.showSnack(context, message: error.message, error: true);
+      }
     } catch (error) {
-      setState(() => _error = error.toString());
+      if (mounted) {
+        GravityFeedback.showSnack(
+          context,
+          message: error.toString(),
+          error: true,
+        );
+      }
     } finally {
       if (mounted) setState(() => _busySessionId = null);
     }
+  }
+
+  void _invalidate() {
+    ref.invalidate(classSessionsProvider);
+    ref.invalidate(upcomingBookingsProvider);
+    ref.invalidate(weekSessionsProvider);
   }
 
   @override
   Widget build(BuildContext context) {
     final selectedDay = ref.watch(scheduleDayProvider);
     final sessionsAsync = ref.watch(classSessionsProvider);
+    final locations =
+        ref.watch(studioLocationsProvider).valueOrNull ?? const [];
+    final selectedLocationId = ref.watch(scheduleLocationIdProvider);
+    final selectedLocationName = selectedLocationId == null
+        ? "All Studios"
+        : locations
+              .where((item) => item.id == selectedLocationId)
+              .map((item) => item.name)
+              .firstWhere((_) => true, orElse: () => "All Studios");
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            GravitySpacing.lg,
-            GravitySpacing.lg,
-            GravitySpacing.lg,
-            GravitySpacing.sm,
-          ),
-          child: Text(
-            "Schedule",
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-        ),
         _DaySlider(
           selectedDay: selectedDay,
           onDaySelected: (day) =>
@@ -108,31 +132,39 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                   ),
                 ),
               ),
-              const Text(
-                "All Studios",
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: GravityColors.gray600,
+              PopupMenuButton<String?>(
+                onSelected: (value) =>
+                    ref.read(scheduleLocationIdProvider.notifier).state = value,
+                itemBuilder: (context) => [
+                  const PopupMenuItem(value: null, child: Text("All Studios")),
+                  for (final location in locations)
+                    PopupMenuItem(
+                      value: location.id,
+                      child: Text(location.name),
+                    ),
+                ],
+                child: Row(
+                  children: [
+                    Text(
+                      selectedLocationName,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: GravityColors.gray600,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.expand_more,
+                      size: 16,
+                      color: GravityColors.gray600,
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 4),
-              const Icon(
-                Icons.expand_more,
-                size: 16,
-                color: GravityColors.gray600,
               ),
             ],
           ),
         ),
-        if (_error != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: GravitySpacing.lg),
-            child: Text(
-              _error!,
-              style: const TextStyle(color: GravityColors.danger600),
-            ),
-          ),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async {
@@ -148,6 +180,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                     icon: Icons.error_outline,
                     title: "Could not load schedule",
                     description: error.toString(),
+                    actionLabel: "Retry",
+                    onAction: () => ref.invalidate(classSessionsProvider),
                   ),
                 ],
               ),
@@ -168,7 +202,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
                 return ListView.separated(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(GravitySpacing.lg),
+                  padding: const EdgeInsets.fromLTRB(
+                    GravitySpacing.lg,
+                    GravitySpacing.lg,
+                    GravitySpacing.lg,
+                    40,
+                  ),
                   itemCount: sessions.length,
                   separatorBuilder: (_, _) =>
                       const SizedBox(height: GravitySpacing.md),
@@ -177,8 +216,15 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                     return ClassSessionCard(
                       session: session,
                       isBusy: _busySessionId == session.id,
-                      onBook: () => _bookSession(session.id),
+                      onBook: () => _bookSession(session),
                       onWaitlist: () => _toggleWaitlist(session),
+                      onOpen: () => showClassDetailSheet(
+                        context,
+                        session: session,
+                        isBusy: _busySessionId == session.id,
+                        onBook: () => _bookSession(session),
+                        onWaitlist: () => _toggleWaitlist(session),
+                      ),
                     );
                   },
                 );

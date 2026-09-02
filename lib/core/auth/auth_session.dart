@@ -50,6 +50,7 @@ class AuthSession {
     required this.expiresIn,
     required this.user,
     required this.expiresAt,
+    this.isDemo = false,
   });
 
   final String accessToken;
@@ -57,6 +58,7 @@ class AuthSession {
   final int expiresIn;
   final AuthUser user;
   final DateTime expiresAt;
+  final bool isDemo;
 
   bool get isExpired => DateTime.now().isAfter(expiresAt);
 
@@ -67,6 +69,7 @@ class AuthSession {
       expiresIn: json["expiresIn"] as int,
       user: AuthUser.fromJson(json["user"] as Map<String, dynamic>),
       expiresAt: DateTime.parse(json["expiresAt"] as String),
+      isDemo: json["isDemo"] as bool? ?? false,
     );
   }
 
@@ -77,6 +80,7 @@ class AuthSession {
       "expiresIn": expiresIn,
       "user": user.toJson(),
       "expiresAt": expiresAt.toIso8601String(),
+      "isDemo": isDemo,
     };
   }
 }

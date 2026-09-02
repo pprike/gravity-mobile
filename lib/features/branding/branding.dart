@@ -56,6 +56,10 @@ final brandingRepositoryProvider = Provider<BrandingRepository>((ref) {
 });
 
 final tenantBrandingProvider = FutureProvider<TenantBranding>((ref) async {
+  final demo = ref.watch(isDemoModeProvider);
+  if (demo) {
+    return const TenantBranding(organizationName: "Iron Peak");
+  }
   try {
     return await ref.watch(brandingRepositoryProvider).getBranding();
   } catch (_) {

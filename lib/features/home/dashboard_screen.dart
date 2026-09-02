@@ -4,9 +4,12 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 import "../../core/providers/app_providers.dart";
 import "../../core/theme/design_tokens.dart";
 import "../../core/widgets/gravity_empty_state.dart";
+import "../../core/widgets/gravity_feedback.dart";
+import "../../core/widgets/gravity_section_header.dart";
 import "../announcements/announcement_providers.dart";
 import "../check_in/check_in_sheet.dart";
 import "../profile/profile_controller.dart";
+import "../scheduling/class_detail_sheet.dart";
 import "../scheduling/models/scheduling_models.dart";
 import "../scheduling/scheduling_formatters.dart";
 import "../scheduling/scheduling_providers.dart";
@@ -23,6 +26,21 @@ class DashboardScreen extends ConsumerWidget {
   final VoidCallback onViewBookings;
   final VoidCallback onOpenCommunity;
 
+  Future<void> _refresh(WidgetRef ref) async {
+    ref.invalidate(upcomingBookingsProvider);
+    ref.invalidate(weekSessionsProvider);
+    ref.invalidate(announcementsProvider);
+    final session = ref.read(authSessionProvider).value;
+    if (session != null) {
+      ref.invalidate(memberSubscriptionProvider(session.user.id));
+    }
+    await Future.wait([
+      ref.read(upcomingBookingsProvider.future),
+      ref.read(weekSessionsProvider.future),
+      ref.read(announcementsProvider.future),
+    ]);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(authSessionProvider).value;
@@ -34,30 +52,31 @@ class DashboardScreen extends ConsumerWidget {
     final bookingsAsync = ref.watch(upcomingBookingsProvider);
     final weekAsync = ref.watch(weekSessionsProvider);
     final announcementsAsync = ref.watch(announcementsProvider);
+    final subscription = session == null
+        ? null
+        : ref.watch(memberSubscriptionProvider(session.user.id)).valueOrNull;
+    final streak = bookingsAsync.valueOrNull?.length ?? 0;
 
     return RefreshIndicator(
-      onRefresh: () async {
-        ref.invalidate(upcomingBookingsProvider);
-        ref.invalidate(weekSessionsProvider);
-        ref.invalidate(announcementsProvider);
-        await Future.wait([
-          ref.read(upcomingBookingsProvider.future),
-          ref.read(weekSessionsProvider.future),
-          ref.read(announcementsProvider.future),
-        ]);
-      },
+      onRefresh: () => _refresh(ref),
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
         children: [
           _WelcomeRow(
             displayName: displayName,
             avatarUrl: avatarUrl,
-            streak: bookingsAsync.valueOrNull?.length ?? 0,
+            streak: streak,
           ),
           const SizedBox(height: GravitySpacing.md),
           bookingsAsync.when(
             loading: () => const _HeroPlaceholder(),
-            error: (_, _) => const SizedBox.shrink(),
+            error: (error, _) => GravityEmptyState(
+              icon: Icons.error_outline,
+              title: "Couldn't load your next class",
+              description: error.toString(),
+              actionLabel: "Retry",
+              onAction: () => ref.invalidate(upcomingBookingsProvider),
+            ),
             data: (bookings) {
               if (bookings.isEmpty) {
                 return _EmptyHero(onBookClass: onBookClass);
@@ -90,8 +109,16 @@ class DashboardScreen extends ConsumerWidget {
               ),
             ],
           ),
+          if (subscription?.planName != null) ...[
+            const SizedBox(height: GravitySpacing.lg),
+            _MembershipCard(
+              planName: subscription!.planName!,
+              status: subscription.status ?? "active",
+              renewalLabel: subscription.renewalLabel,
+            ),
+          ],
           const SizedBox(height: GravitySpacing.lg),
-          _SectionHeader(
+          GravitySectionHeader(
             title: "Popular Classes This Week",
             actionLabel: "See All",
             onAction: onBookClass,
@@ -102,18 +129,30 @@ class DashboardScreen extends ConsumerWidget {
               height: 196,
               child: Center(child: CircularProgressIndicator()),
             ),
-            error: (_, _) => const SizedBox.shrink(),
+            error: (error, _) => GravityEmptyState(
+              icon: Icons.error_outline,
+              title: "Couldn't load classes",
+              description: error.toString(),
+              actionLabel: "Retry",
+              onAction: () => ref.invalidate(weekSessionsProvider),
+            ),
             data: (sessions) {
               final upcoming = sessions
-                  .where((session) => session.startsAt.isAfter(DateTime.now()))
+                  .where(
+                    (item) =>
+                        item.startsAt.isAfter(DateTime.now()) &&
+                        !item.isCancelled,
+                  )
                   .take(8)
                   .toList();
               if (upcoming.isEmpty) {
-                return const GravityEmptyState(
+                return GravityEmptyState(
                   icon: Icons.fitness_center_outlined,
                   title: "No classes this week",
                   description:
                       "New sessions will appear here as they’re scheduled.",
+                  actionLabel: "Browse schedule",
+                  onAction: onBookClass,
                 );
               }
               return SizedBox(
@@ -123,9 +162,10 @@ class DashboardScreen extends ConsumerWidget {
                   itemCount: upcoming.length,
                   separatorBuilder: (_, _) => const SizedBox(width: 12),
                   itemBuilder: (context, index) {
+                    final item = upcoming[index];
                     return _PopularClassCard(
-                      session: upcoming[index],
-                      onTap: onBookClass,
+                      session: item,
+                      onTap: () => _openSession(context, ref, item),
                     );
                   },
                 ),
@@ -133,15 +173,22 @@ class DashboardScreen extends ConsumerWidget {
             },
           ),
           const SizedBox(height: GravitySpacing.lg),
-          _SectionHeader(
+          GravitySectionHeader(
             title: "Studio updates",
             actionLabel: "See all",
             onAction: onOpenCommunity,
           ),
           const SizedBox(height: GravitySpacing.sm),
           announcementsAsync.when(
-            loading: () => const SizedBox.shrink(),
-            error: (_, _) => const SizedBox.shrink(),
+            loading: () => const SizedBox(
+              height: 80,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (error, _) => GravityEmptyState(
+              icon: Icons.error_outline,
+              title: "Couldn't load updates",
+              description: error.toString(),
+            ),
             data: (items) {
               if (items.isEmpty) {
                 return const GravityEmptyState(
@@ -191,6 +238,60 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _openSession(
+    BuildContext context,
+    WidgetRef ref,
+    ClassSession session,
+  ) async {
+    await showClassDetailSheet(
+      context,
+      session: session,
+      onBook: () => _book(context, ref, session),
+      onWaitlist: () => _waitlist(context, ref, session),
+    );
+  }
+
+  Future<void> _book(
+    BuildContext context,
+    WidgetRef ref,
+    ClassSession session,
+  ) async {
+    await ref.read(schedulingRepositoryProvider).bookSession(session.id);
+    _invalidateSchedule(ref);
+    if (context.mounted) {
+      GravityFeedback.showSnack(
+        context,
+        message: "You're booked for ${session.name}",
+      );
+    }
+  }
+
+  Future<void> _waitlist(
+    BuildContext context,
+    WidgetRef ref,
+    ClassSession session,
+  ) async {
+    final repository = ref.read(schedulingRepositoryProvider);
+    if (session.waitlistedByMe) {
+      await repository.leaveWaitlist(session.id);
+      if (context.mounted) {
+        GravityFeedback.showSnack(context, message: "Left the waitlist");
+      }
+    } else {
+      await repository.joinWaitlist(session.id);
+      if (context.mounted) {
+        GravityFeedback.showSnack(context, message: "You're on the waitlist");
+      }
+    }
+    _invalidateSchedule(ref);
+  }
+
+  void _invalidateSchedule(WidgetRef ref) {
+    ref.invalidate(classSessionsProvider);
+    ref.invalidate(upcomingBookingsProvider);
+    ref.invalidate(weekSessionsProvider);
   }
 
   String _resolveAvatar(WidgetRef ref, String? avatarUrl) {
@@ -284,6 +385,73 @@ class _WelcomeRow extends StatelessWidget {
   }
 }
 
+class _MembershipCard extends StatelessWidget {
+  const _MembershipCard({
+    required this.planName,
+    required this.status,
+    this.renewalLabel,
+  });
+
+  final String planName;
+  final String status;
+  final String? renewalLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(GravityRadii.lg),
+        border: Border.all(color: GravityColors.gray200),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: GravityColors.primary50,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.workspace_premium_rounded,
+              color: GravityColors.primary700,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  planName,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: GravityColors.gray900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  [
+                    status[0].toUpperCase() + status.substring(1),
+                    if (renewalLabel != null) renewalLabel,
+                  ].join(" · "),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: GravityColors.gray500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _HeroBookingCard extends StatelessWidget {
   const _HeroBookingCard({required this.booking, required this.onView});
 
@@ -357,13 +525,15 @@ class _HeroBookingCard extends StatelessWidget {
               children: [
                 const Icon(Icons.person_rounded, size: 16, color: Colors.white),
                 const SizedBox(width: 6),
-                const Text(
-                  "Your class",
-                  style: TextStyle(fontSize: 13, color: Colors.white),
+                Expanded(
+                  child: Text(
+                    booking.coachName ?? "Your class",
+                    style: const TextStyle(fontSize: 13, color: Colors.white),
+                  ),
                 ),
-                const Spacer(),
                 Text(
-                  SchedulingFormatters.durationLabel(booking.duration),
+                  booking.locationName ??
+                      SchedulingFormatters.durationLabel(booking.duration),
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -431,47 +601,6 @@ class _HeroPlaceholder extends StatelessWidget {
         color: GravityColors.gray200,
         borderRadius: BorderRadius.circular(GravityRadii.xl),
       ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({
-    required this.title,
-    required this.actionLabel,
-    required this.onAction,
-  });
-
-  final String title;
-  final String actionLabel;
-  final VoidCallback onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: GravityColors.gray900,
-            ),
-          ),
-        ),
-        GestureDetector(
-          onTap: onAction,
-          child: Text(
-            actionLabel,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: GravityColors.primary600,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

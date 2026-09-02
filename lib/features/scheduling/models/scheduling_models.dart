@@ -12,7 +12,9 @@ class ClassSession {
     this.waitlistedByMe = false,
     this.waitlistCount = 0,
     this.coachUserId,
+    this.coachName,
     this.locationId,
+    this.locationName,
   });
 
   final String id;
@@ -27,13 +29,51 @@ class ClassSession {
   final bool waitlistedByMe;
   final int waitlistCount;
   final String? coachUserId;
+  final String? coachName;
   final String? locationId;
+  final String? locationName;
 
   int get spotsLeft => (capacity - bookedCount).clamp(0, capacity);
 
   bool get isFull => bookedCount >= capacity;
 
+  bool get isCancelled => status.toLowerCase() == "cancelled";
+
   Duration get duration => endsAt.difference(startsAt);
+
+  String get coachLabel => coachName == null || coachName!.isEmpty
+      ? "Studio class"
+      : coachName!;
+
+  String get locationLabel => locationName == null || locationName!.isEmpty
+      ? "Studio"
+      : locationName!;
+
+  ClassSession copyWith({
+    int? bookedCount,
+    bool? bookedByMe,
+    bool? waitlistedByMe,
+    int? waitlistCount,
+    String? status,
+  }) {
+    return ClassSession(
+      id: id,
+      name: name,
+      description: description,
+      startsAt: startsAt,
+      endsAt: endsAt,
+      capacity: capacity,
+      bookedCount: bookedCount ?? this.bookedCount,
+      status: status ?? this.status,
+      bookedByMe: bookedByMe ?? this.bookedByMe,
+      waitlistedByMe: waitlistedByMe ?? this.waitlistedByMe,
+      waitlistCount: waitlistCount ?? this.waitlistCount,
+      coachUserId: coachUserId,
+      coachName: coachName,
+      locationId: locationId,
+      locationName: locationName,
+    );
+  }
 
   factory ClassSession.fromJson(Map<String, dynamic> json) {
     return ClassSession(
@@ -49,7 +89,9 @@ class ClassSession {
       waitlistedByMe: json["waitlistedByMe"] as bool? ?? false,
       waitlistCount: json["waitlistCount"] as int? ?? 0,
       coachUserId: json["coachUserId"] as String?,
+      coachName: json["coachName"] as String?,
       locationId: json["locationId"] as String?,
+      locationName: json["locationName"] as String?,
     );
   }
 }
@@ -85,7 +127,9 @@ class UpcomingBooking {
     required this.bookingStatus,
     required this.sessionStatus,
     this.locationId,
+    this.locationName,
     this.coachUserId,
+    this.coachName,
   });
 
   final String bookingId;
@@ -97,9 +141,13 @@ class UpcomingBooking {
   final String bookingStatus;
   final String sessionStatus;
   final String? locationId;
+  final String? locationName;
   final String? coachUserId;
+  final String? coachName;
 
   Duration get duration => endsAt.difference(startsAt);
+
+  bool get isCancelledSession => sessionStatus.toLowerCase() == "cancelled";
 
   factory UpcomingBooking.fromJson(Map<String, dynamic> json) {
     return UpcomingBooking(
@@ -112,7 +160,9 @@ class UpcomingBooking {
       bookingStatus: json["bookingStatus"] as String,
       sessionStatus: json["sessionStatus"] as String,
       locationId: json["locationId"] as String?,
+      locationName: json["locationName"] as String?,
       coachUserId: json["coachUserId"] as String?,
+      coachName: json["coachName"] as String?,
     );
   }
 }
@@ -136,6 +186,20 @@ class WaitlistStatus {
       userId: json["userId"] as String,
       status: json["status"] as String,
       position: json["position"] as int? ?? 0,
+    );
+  }
+}
+
+class StudioLocation {
+  const StudioLocation({required this.id, required this.name});
+
+  final String id;
+  final String name;
+
+  factory StudioLocation.fromJson(Map<String, dynamic> json) {
+    return StudioLocation(
+      id: json["id"] as String,
+      name: json["name"] as String,
     );
   }
 }

@@ -1,12 +1,13 @@
 import "package:flutter/material.dart";
 
-/// Gravity design tokens aligned with gravity-ui (globals.css + tailwind.config).
+/// Gravity design tokens aligned with Figma and gravity-ui.
 abstract final class GravityColors {
   static const primary50 = Color(0xFFF0FDFA);
   static const primary100 = Color(0xFFCCFBF1);
   static const primary500 = Color(0xFF14B8A6);
   static const primary600 = Color(0xFF0D9488);
   static const primary700 = Color(0xFF0F766E);
+  static const primary800 = Color(0xFF115E59);
 
   static const neutral50 = Color(0xFFFAFAFA);
   static const neutral100 = Color(0xFFF5F5F5);
@@ -18,7 +19,6 @@ abstract final class GravityColors {
   static const neutral800 = Color(0xFF262626);
   static const neutral900 = Color(0xFF171717);
 
-  // Figma mobile palette (Tailwind gray scale used in designs)
   static const gray200 = Color(0xFFE5E7EB);
   static const gray400 = Color(0xFF9CA3AF);
   static const gray500 = Color(0xFF6B7280);
@@ -26,7 +26,9 @@ abstract final class GravityColors {
   static const gray900 = Color(0xFF111827);
   static const mint100 = Color(0xFFD1FAE5);
 
+  static const success50 = Color(0xFFECFDF5);
   static const success600 = Color(0xFF16A34A);
+  static const warning50 = Color(0xFFFEF3C7);
   static const warning600 = Color(0xFFD97706);
   static const danger50 = Color(0xFFFEF2F2);
   static const danger600 = Color(0xFFDC2626);

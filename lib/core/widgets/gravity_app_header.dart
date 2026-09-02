@@ -1,19 +1,24 @@
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
+import "../../core/providers/app_providers.dart";
 import "../../features/branding/branding.dart";
 import "../theme/design_tokens.dart";
 
 class GravityAppHeader extends ConsumerWidget {
-  const GravityAppHeader({super.key, this.onNotifications, this.trailing});
+  const GravityAppHeader({super.key, this.onNotifications, this.trailing, this.unreadCount = 0});
 
   final VoidCallback? onNotifications;
   final Widget? trailing;
+  final int unreadCount;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final branding = ref.watch(tenantBrandingProvider).valueOrNull;
-    final name = (branding?.organizationName ?? "Gravity").toUpperCase();
+    final demo = ref.watch(isDemoModeProvider);
+    final name = demo
+        ? "IRON PEAK"
+        : (branding?.organizationName ?? "Gravity").toUpperCase();
 
     return Container(
       height: 56,
@@ -73,10 +78,30 @@ class GravityAppHeader extends ConsumerWidget {
                     color: GravityColors.neutral50,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
-                    Icons.notifications_none_rounded,
-                    size: 20,
-                    color: GravityColors.gray900,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      const Center(
+                        child: Icon(
+                          Icons.notifications_none_rounded,
+                          size: 20,
+                          color: GravityColors.gray900,
+                        ),
+                      ),
+                      if (unreadCount > 0)
+                        Positioned(
+                          top: 6,
+                          right: 6,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: GravityColors.danger600,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),

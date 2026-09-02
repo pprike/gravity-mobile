@@ -214,12 +214,13 @@ class ApiClient {
       fieldName: await MultipartFile.fromFile(filePath),
     });
 
+    final Response<dynamic> uploadResponse;
     try {
-      final response = await _dio.post(path, data: formData);
-      return _parseResponse(response, fromJson);
+      uploadResponse = await _dio.post(path, data: formData);
     } on DioException catch (error) {
       throw _mapDioError(error);
     }
+    return _parseResponse(uploadResponse, fromJson);
   }
 
   Future<T> _request<T>(
@@ -229,17 +230,18 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
     required T Function(Object? json) fromJson,
   }) async {
+    final Response<dynamic> requestResponse;
     try {
-      final response = await _dio.request(
+      requestResponse = await _dio.request(
         path,
         data: data,
         queryParameters: queryParameters,
         options: Options(method: method),
       );
-      return _parseResponse(response, fromJson);
     } on DioException catch (error) {
       throw _mapDioError(error);
     }
+    return _parseResponse(requestResponse, fromJson);
   }
 
   Future<List<T>> _requestList<T>(

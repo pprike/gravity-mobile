@@ -55,6 +55,8 @@ class _CheckInSheetState extends ConsumerState<CheckInSheet> {
     try {
       final qr = await CheckInRepository(
         ref.read(apiClientProvider),
+        demoCatalog: ref.read(demoCatalogProvider),
+        demoMode: ref.read(isDemoModeProvider),
       ).getCheckInQr();
       if (!mounted) return;
       setState(() {

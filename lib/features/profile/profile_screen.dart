@@ -7,7 +7,9 @@ import "../../core/providers/app_providers.dart";
 import "../../core/theme/design_tokens.dart";
 import "../../core/widgets/gravity_button.dart";
 import "../../core/widgets/gravity_card.dart";
+import "../../core/widgets/gravity_feedback.dart";
 import "../../core/widgets/gravity_input.dart";
+import "../notifications/notification_settings_screen.dart";
 import "models/user_profile.dart";
 import "profile_controller.dart";
 
@@ -104,7 +106,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     },
             ),
           );
-      if (mounted) setState(() => _isEditing = false);
+      if (mounted) {
+        setState(() => _isEditing = false);
+        GravityFeedback.showSnack(context, message: "Profile saved");
+      }
     } catch (error) {
       setState(() => _error = error.toString());
     } finally {
@@ -113,8 +118,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _logout() async {
-    await ref.read(authRepositoryProvider).logout();
-    ref.invalidate(authSessionProvider);
+    final confirmed = await GravityFeedback.confirm(
+      context: context,
+      title: "Sign out?",
+      message: "You’ll need your studio email and password to get back in.",
+      cancelLabel: "Stay",
+      confirmLabel: "Sign out",
+      destructive: true,
+    );
+    if (!confirmed) return;
+    await ref.read(authSessionProvider.notifier).logout();
     if (mounted) context.go("/login");
   }
 
@@ -122,11 +135,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider).value;
     if (session == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Center(child: CircularProgressIndicator());
     }
 
     final profileState = ref.watch(profileControllerProvider(session.user.id));
     final member = profileState.valueOrNull?.member;
+    final subscription = ref
+        .watch(memberSubscriptionProvider(session.user.id))
+        .valueOrNull;
 
     ref.listen(profileControllerProvider(session.user.id), (previous, next) {
       final profile = next.valueOrNull?.member;
@@ -136,31 +152,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     });
 
     if (profileState.isLoading && member == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    if (profileState.hasError && member == null) {
-      return Scaffold(
-        appBar: widget.embedded ? null : _buildAppBar(member),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(GravitySpacing.lg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(profileState.error.toString()),
-                const SizedBox(height: GravitySpacing.md),
-                GravityButton(
-                  label: "Retry",
-                  onPressed: () => ref
-                      .read(profileControllerProvider(session.user.id).notifier)
-                      .load(),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (!_isEditing && member != null && _displayNameController.text.isEmpty) {
@@ -169,225 +161,284 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     final avatarUrl = _resolveAvatarUrl(member?.avatarUrl);
 
-    return Scaffold(
-      appBar: widget.embedded ? null : _buildAppBar(member),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(GravitySpacing.lg),
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+      children: [
+        Row(
           children: [
-            if (widget.embedded) ...[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Profile",
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  Row(
-                    children: [
-                      if (!_isEditing && member != null)
-                        IconButton(
-                          tooltip: "Edit",
-                          onPressed: () => setState(() => _isEditing = true),
-                          icon: const Icon(Icons.edit_outlined),
-                        ),
-                      IconButton(
-                        tooltip: "Sign out",
-                        onPressed: _logout,
-                        icon: const Icon(Icons.logout_rounded),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: GravitySpacing.md),
-            ],
-            Center(
-              child: Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 48,
-                    backgroundColor: GravityColors.neutral200,
-                    backgroundImage: avatarUrl.isNotEmpty
-                        ? NetworkImage(avatarUrl)
-                        : null,
-                    child: avatarUrl.isEmpty
-                        ? Text(
-                            (member?.displayName ?? session.user.displayName)
-                                .characters
-                                .first
-                                .toUpperCase(),
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w600,
-                              color: GravityColors.neutral700,
-                            ),
-                          )
-                        : null,
-                  ),
-                  if (_isEditing)
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: IconButton.filled(
-                        style: IconButton.styleFrom(
-                          backgroundColor: GravityColors.primary600,
-                          foregroundColor: Colors.white,
-                        ),
-                        onPressed: _isSaving
-                            ? null
-                            : () => _pickAvatar(session.user.id),
-                        icon: const Icon(Icons.camera_alt_outlined, size: 18),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: GravitySpacing.sm),
-            Center(
+            const Expanded(
               child: Text(
-                session.user.email,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: GravityColors.neutral600,
+                "Profile",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: GravityColors.gray900,
                 ),
               ),
             ),
-            const SizedBox(height: GravitySpacing.lg),
-            if (member == null)
-              GravityCard(
-                child: Text(
-                  "No member profile is linked to this account. "
-                  "Sign in with a Member role to edit profile details.",
-                  style: Theme.of(context).textTheme.bodyMedium,
+            if (!_isEditing && member != null)
+              TextButton(
+                onPressed: () => setState(() => _isEditing = true),
+                child: const Text("Edit"),
+              ),
+          ],
+        ),
+        const SizedBox(height: GravitySpacing.md),
+        Center(
+          child: Stack(
+            children: [
+              CircleAvatar(
+                radius: 48,
+                backgroundColor: GravityColors.primary50,
+                backgroundImage: avatarUrl.isNotEmpty
+                    ? NetworkImage(avatarUrl)
+                    : null,
+                child: avatarUrl.isEmpty
+                    ? Text(
+                        (member?.displayName ?? session.user.displayName)
+                            .characters
+                            .first
+                            .toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          color: GravityColors.primary700,
+                        ),
+                      )
+                    : null,
+              ),
+              if (_isEditing)
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: IconButton.filled(
+                    style: IconButton.styleFrom(
+                      backgroundColor: GravityColors.primary600,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: _isSaving
+                        ? null
+                        : () => _pickAvatar(session.user.id),
+                    icon: const Icon(Icons.camera_alt_outlined, size: 18),
+                  ),
                 ),
-              )
-            else if (_isEditing) ...[
-              GravityCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    GravityInput(
-                      label: "Display name",
-                      controller: _displayNameController,
-                      textInputAction: TextInputAction.next,
+            ],
+          ),
+        ),
+        const SizedBox(height: GravitySpacing.sm),
+        Center(
+          child: Text(
+            member?.displayName ?? session.user.displayName,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: GravityColors.gray900,
+            ),
+          ),
+        ),
+        Center(
+          child: Text(
+            session.user.email,
+            style: const TextStyle(fontSize: 13, color: GravityColors.gray500),
+          ),
+        ),
+        const SizedBox(height: GravitySpacing.lg),
+        if (subscription?.planName != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: GravitySpacing.md),
+            child: GravityCard(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: GravityColors.primary50,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(height: GravitySpacing.md),
-                    GravityInput(
-                      label: "Phone",
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      textInputAction: TextInputAction.next,
+                    child: const Icon(
+                      Icons.workspace_premium_rounded,
+                      color: GravityColors.primary700,
                     ),
-                    const SizedBox(height: GravitySpacing.lg),
-                    Text(
-                      "Emergency contact",
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: GravitySpacing.sm),
-                    GravityInput(
-                      label: "Name",
-                      controller: _emergencyNameController,
-                      textInputAction: TextInputAction.next,
-                    ),
-                    const SizedBox(height: GravitySpacing.md),
-                    GravityInput(
-                      label: "Phone",
-                      controller: _emergencyPhoneController,
-                      keyboardType: TextInputType.phone,
-                    ),
-                    if (_error != null) ...[
-                      const SizedBox(height: GravitySpacing.md),
-                      Text(
-                        _error!,
-                        style: const TextStyle(color: GravityColors.danger600),
-                      ),
-                    ],
-                    const SizedBox(height: GravitySpacing.lg),
-                    Row(
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: GravityButton(
-                            label: "Cancel",
-                            variant: GravityButtonVariant.secondary,
-                            onPressed: _isSaving
-                                ? null
-                                : () => setState(() {
-                                    _isEditing = false;
-                                    _populateFields(member);
-                                  }),
+                        Text(
+                          subscription!.planName!,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(width: GravitySpacing.sm),
-                        Expanded(
-                          child: GravityButton(
-                            label: "Save",
-                            onPressed: _isSaving
-                                ? null
-                                : () => _save(session.user.id),
-                            isLoading: _isSaving,
+                        Text(
+                          [
+                            if (subscription.status != null)
+                              subscription.status,
+                            if (subscription.renewalLabel != null)
+                              subscription.renewalLabel,
+                          ].join(" · "),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: GravityColors.gray500,
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ] else ...[
-              GravityCard(
-                child: Column(
+            ),
+          ),
+        if (member == null)
+          const GravityCard(
+            child: Text(
+              "No member profile is linked to this account. "
+              "Sign in with a Member role to edit profile details.",
+            ),
+          )
+        else if (_isEditing) ...[
+          GravityCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                GravityInput(
+                  label: "Display name",
+                  controller: _displayNameController,
+                  textInputAction: TextInputAction.next,
+                ),
+                const SizedBox(height: GravitySpacing.md),
+                GravityInput(
+                  label: "Phone",
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  textInputAction: TextInputAction.next,
+                ),
+                const SizedBox(height: GravitySpacing.lg),
+                Text(
+                  "Emergency contact",
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: GravitySpacing.sm),
+                GravityInput(
+                  label: "Name",
+                  controller: _emergencyNameController,
+                  textInputAction: TextInputAction.next,
+                ),
+                const SizedBox(height: GravitySpacing.md),
+                GravityInput(
+                  label: "Phone",
+                  controller: _emergencyPhoneController,
+                  keyboardType: TextInputType.phone,
+                ),
+                if (_error != null) ...[
+                  const SizedBox(height: GravitySpacing.md),
+                  Text(
+                    _error!,
+                    style: const TextStyle(color: GravityColors.danger600),
+                  ),
+                ],
+                const SizedBox(height: GravitySpacing.lg),
+                Row(
                   children: [
-                    _ProfileField(
-                      label: "Display name",
-                      value: member.displayName ?? "—",
+                    Expanded(
+                      child: GravityButton(
+                        label: "Cancel",
+                        variant: GravityButtonVariant.secondary,
+                        onPressed: _isSaving
+                            ? null
+                            : () => setState(() {
+                                _isEditing = false;
+                                _populateFields(member);
+                              }),
+                      ),
                     ),
-                    const Divider(height: GravitySpacing.lg),
-                    _ProfileField(label: "Phone", value: member.phone ?? "—"),
+                    const SizedBox(width: GravitySpacing.sm),
+                    Expanded(
+                      child: GravityButton(
+                        label: "Save",
+                        onPressed: _isSaving
+                            ? null
+                            : () => _save(session.user.id),
+                        isLoading: _isSaving,
+                      ),
+                    ),
                   ],
                 ),
+              ],
+            ),
+          ),
+        ] else ...[
+          GravityCard(
+            child: Column(
+              children: [
+                _ProfileField(
+                  label: "Display name",
+                  value: member.displayName ?? "—",
+                ),
+                const Divider(height: GravitySpacing.lg),
+                _ProfileField(label: "Phone", value: member.phone ?? "—"),
+              ],
+            ),
+          ),
+          const SizedBox(height: GravitySpacing.md),
+          GravityCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Emergency contact",
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: GravitySpacing.md),
+                _ProfileField(
+                  label: "Name",
+                  value: member.emergencyContact?["name"] ?? "—",
+                ),
+                const Divider(height: GravitySpacing.lg),
+                _ProfileField(
+                  label: "Phone",
+                  value: member.emergencyContact?["phone"] ?? "—",
+                ),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: GravitySpacing.md),
+        GravityCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(
+                  Icons.notifications_outlined,
+                  color: GravityColors.primary700,
+                ),
+                title: const Text("Notifications"),
+                subtitle: const Text("Choose what the studio can send you"),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const NotificationSettingsScreen(),
+                    ),
+                  );
+                },
               ),
-              const SizedBox(height: GravitySpacing.md),
-              GravityCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Emergency contact",
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: GravitySpacing.md),
-                    _ProfileField(
-                      label: "Name",
-                      value: member.emergencyContact?["name"] ?? "—",
-                    ),
-                    const Divider(height: GravitySpacing.lg),
-                    _ProfileField(
-                      label: "Phone",
-                      value: member.emergencyContact?["phone"] ?? "—",
-                    ),
-                  ],
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(
+                  Icons.logout_rounded,
+                  color: GravityColors.danger600,
                 ),
+                title: const Text("Sign out"),
+                onTap: _logout,
               ),
             ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar(MemberProfileData? member) {
-    return AppBar(
-      title: const Text("Profile"),
-      actions: [
-        if (!_isEditing && member != null)
-          IconButton(
-            tooltip: "Edit",
-            onPressed: () => setState(() => _isEditing = true),
-            icon: const Icon(Icons.edit_outlined),
           ),
-        IconButton(
-          tooltip: "Sign out",
-          onPressed: _logout,
-          icon: const Icon(Icons.logout_rounded),
         ),
       ],
     );

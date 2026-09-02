@@ -21,6 +21,24 @@ void main() {
       expect(session.bookedByMe, isTrue);
     });
 
+    test("parses coach and location labels from API payloads", () {
+      final session = ClassSession.fromJson({
+        "id": "88888888-8888-8888-8888-888888888888",
+        "name": "Peak Pilates Flow",
+        "startsAt": "2026-08-08T11:00:00Z",
+        "endsAt": "2026-08-08T12:00:00Z",
+        "capacity": 12,
+        "bookedCount": 9,
+        "status": "scheduled",
+        "bookedByMe": false,
+        "coachName": "Sarah T.",
+        "locationName": "Peak Studio 1",
+      });
+
+      expect(session.coachLabel, "Sarah T.");
+      expect(session.locationLabel, "Peak Studio 1");
+    });
+
     test("parses waitlist fields on a full class session", () {
       final session = ClassSession.fromJson({
         "id": "88888888-8888-8888-8888-888888888888",

@@ -103,7 +103,19 @@ class AppTheme {
           ),
         ),
       ),
-      dividerColor: GravityColors.gray200,
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: GravityColors.gray900,
+        contentTextStyle: const TextStyle(color: Colors.white, fontSize: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(GravityRadii.md),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(GravityRadii.xl),
+        ),
+      ),
       cardTheme: CardThemeData(
         color: Colors.white,
         elevation: 0,

@@ -29,17 +29,10 @@ class GravityApp extends ConsumerWidget {
               height: media.size.height,
               child: MediaQuery(
                 data: media.copyWith(size: Size(maxWidth, media.size.height)),
-                child: DecoratedBox(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Color(0x33000000),
-                        blurRadius: 24,
-                        offset: Offset(0, 8),
-                      ),
-                    ],
-                  ),
+                child: Material(
+                  color: Colors.white,
+                  elevation: 12,
+                  shadowColor: const Color(0x33000000),
                   child: content,
                 ),
               ),

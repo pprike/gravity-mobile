@@ -16,6 +16,37 @@ class GravityApp extends ConsumerWidget {
       theme: AppTheme.light(),
       debugShowCheckedModeBanner: false,
       routerConfig: router,
+      builder: (context, child) {
+        final content = child ?? const SizedBox.shrink();
+        final media = MediaQuery.of(context);
+        const maxWidth = 430.0;
+        if (media.size.width <= maxWidth) return content;
+        return ColoredBox(
+          color: const Color(0xFFE5E7EB),
+          child: Center(
+            child: SizedBox(
+              width: maxWidth,
+              height: media.size.height,
+              child: MediaQuery(
+                data: media.copyWith(size: Size(maxWidth, media.size.height)),
+                child: DecoratedBox(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0x33000000),
+                        blurRadius: 24,
+                        offset: Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: content,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

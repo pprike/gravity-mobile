@@ -60,6 +60,19 @@ class ProfileRepository {
     }
   }
 
+  Future<void> deleteAccount() async {
+    if (_demo) {
+      throw ApiException(
+        message: "Account deletion isn't available in the demo studio.",
+        code: "DEMO",
+      );
+    }
+    await _apiClient.delete<void>(
+      "/api/v1/me",
+      fromJson: (_) {},
+    );
+  }
+
   Future<String> createBillingPortalSession() async {
     if (_demo) {
       throw ApiException(

@@ -5,6 +5,7 @@ import "package:image_picker/image_picker.dart";
 import "package:url_launcher/url_launcher.dart";
 
 import "../../core/api/error_messages.dart";
+import "../../core/auth/biometric_service.dart";
 import "../../core/providers/app_providers.dart";
 import "../../core/theme/design_tokens.dart";
 import "../../core/theme/gravity_palette.dart";
@@ -140,6 +141,43 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  Future<void> _deleteAccount(String userId) async {
+    final confirmed = await GravityFeedback.confirm(
+      context: context,
+      title: "Delete your account?",
+      message:
+          "This permanently deletes your member data, cancels any active membership, "
+          "and cannot be undone. Your studio will lose access to your booking history.",
+      cancelLabel: "Keep account",
+      confirmLabel: "Delete account",
+      destructive: true,
+    );
+    if (!confirmed || !mounted) return;
+
+    setState(() {
+      _isSaving = true;
+      _error = null;
+    });
+    try {
+      await ref
+          .read(profileControllerProvider(userId).notifier)
+          .deleteAccount();
+      if (!mounted) return;
+      await ref.read(authSessionProvider.notifier).logout();
+      if (mounted) context.go("/login");
+    } catch (error) {
+      setState(
+        () => _error = friendlyErrorMessage(
+          error,
+          fallback:
+              "Couldn't delete your account right now. Please contact your studio.",
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
   Future<void> _logout() async {
     final confirmed = await GravityFeedback.confirm(
       context: context,
@@ -240,6 +278,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     status: subscription.status,
                     renewalLabel: subscription.renewalLabel,
                     priceLabel: subscription.priceLabel,
+                    allowedLocationNames: subscription.allowedLocationNames,
                     bookedCount: bookings.length,
                     onManageBilling: session.isDemo ? null : _openBillingPortal,
                   ),
@@ -375,6 +414,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           : () => showChangePasswordSheet(context),
                     ),
                     const Divider(height: 1),
+                    const _BiometricTile(),
+                    const Divider(height: 1),
                     ListTile(
                       leading: Icon(
                         Icons.logout_rounded,
@@ -386,9 +427,55 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                       onTap: _logout,
                     ),
+                    if (!session.isDemo) ...[
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: Icon(
+                          Icons.delete_forever_rounded,
+                          color: context.palette.danger,
+                        ),
+                        title: Text(
+                          "Delete account",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: context.palette.danger,
+                          ),
+                        ),
+                        subtitle: const Text(
+                          "Permanently removes your data",
+                        ),
+                        onTap: _isSaving
+                            ? null
+                            : () => _deleteAccount(session.user.id),
+                      ),
+                    ],
                   ],
                 ),
               ),
+              if (_error != null) ...[
+                const SizedBox(height: 12),
+                Semantics(
+                  liveRegion: true,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.palette.dangerSurface,
+                      borderRadius: BorderRadius.circular(GravityRadii.md),
+                    ),
+                    child: Text(
+                      _error!,
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.4,
+                        color: context.palette.danger,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -475,6 +562,70 @@ class _AppearanceTile extends ConsumerWidget {
     );
 
     if (choice != null) await ref.read(themeModeProvider.notifier).set(choice);
+  }
+}
+
+class _BiometricTile extends ConsumerStatefulWidget {
+  const _BiometricTile();
+
+  @override
+  ConsumerState<_BiometricTile> createState() => _BiometricTileState();
+}
+
+class _BiometricTileState extends ConsumerState<_BiometricTile> {
+  bool _toggling = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final service = ref.watch(biometricServiceProvider);
+
+    return FutureBuilder<bool>(
+      future: service.isAvailable,
+      builder: (context, snap) {
+        final available = snap.data ?? false;
+        if (!available) return const SizedBox.shrink();
+
+        final enabled = service.isEnabled;
+        return SwitchListTile.adaptive(
+          secondary: Icon(
+            Icons.fingerprint_rounded,
+            color: context.palette.accentStrong,
+          ),
+          title: const Text(
+            "Face ID / Fingerprint",
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+          subtitle: const Text("Unlock the app without your password"),
+          value: enabled,
+          activeTrackColor: context.palette.accent,
+          onChanged: _toggling
+              ? null
+              : (value) async {
+                  setState(() => _toggling = true);
+                  try {
+                    if (value) {
+                      final ok = await service.authenticate();
+                      if (!ok) {
+                        if (context.mounted) {
+                          GravityFeedback.showSnack(
+                            context,
+                            message:
+                                "Couldn't verify your identity. Please try again.",
+                            error: true,
+                          );
+                        }
+                        return;
+                      }
+                    }
+                    await service.setEnabled(value);
+                    if (context.mounted) setState(() {});
+                  } finally {
+                    if (mounted) setState(() => _toggling = false);
+                  }
+                },
+        );
+      },
+    );
   }
 }
 
@@ -657,6 +808,7 @@ class _MembershipPanel extends StatelessWidget {
     this.status,
     this.renewalLabel,
     this.priceLabel,
+    this.allowedLocationNames = const [],
     this.onManageBilling,
   });
 
@@ -665,7 +817,13 @@ class _MembershipPanel extends StatelessWidget {
   final String? status;
   final String? renewalLabel;
   final String? priceLabel;
+  final List<String> allowedLocationNames;
   final VoidCallback? onManageBilling;
+
+  bool get _requiresPayment {
+    final s = (status ?? "").toLowerCase();
+    return s == "frozen" || s == "past_due";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -682,6 +840,46 @@ class _MembershipPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (_requiresPayment) ...[
+            Semantics(
+              liveRegion: true,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDC2626),
+                  borderRadius: BorderRadius.circular(GravityRadii.md),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.warning_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        (status ?? "").toLowerCase() == "frozen"
+                            ? "Membership frozen — update your payment to re-activate."
+                            : "Payment past due — update your payment to avoid suspension.",
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           Text(
             "MEMBERSHIP",
             style: TextStyle(
@@ -709,6 +907,29 @@ class _MembershipPanel extends StatelessWidget {
             ].join(" · "),
             style: const TextStyle(fontSize: 13, color: Colors.white70),
           ),
+          if (allowedLocationNames.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.place_outlined,
+                  size: 14,
+                  color: GravityColors.mint100,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    allowedLocationNames.join(", "),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: GravityColors.mint100,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 14),
           Text(
             bookedCount == 1
@@ -929,3 +1150,4 @@ class _ProfileField extends StatelessWidget {
     );
   }
 }
+

@@ -50,4 +50,6 @@ class ProfileController extends StateNotifier<AsyncValue<UserProfile?>> {
     final next = await _repository.uploadAvatar(_userId, filePath);
     state = AsyncValue.data(next);
   }
+
+  Future<void> deleteAccount() => _repository.deleteAccount();
 }

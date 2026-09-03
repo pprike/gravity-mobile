@@ -3,9 +3,11 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:go_router/go_router.dart";
 
 import "../core/providers/app_providers.dart";
+import "../core/theme/theme_mode_controller.dart";
 import "../features/auth/login_screen.dart";
 import "../features/auth/splash_screen.dart";
 import "../features/home/home_shell.dart";
+import "../features/onboarding/onboarding_screen.dart";
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authSessionProvider);
@@ -13,9 +15,10 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: "/login",
     refreshListenable: _AuthRefreshListenable(ref),
-    redirect: (context, state) {
+    redirect: (context, state) async {
       final loggingIn = state.matchedLocation == "/login";
       final splashing = state.matchedLocation == "/splash";
+      final onboarding = state.matchedLocation == "/onboarding";
 
       if (authState.isLoading) {
         return splashing ? null : "/splash";
@@ -27,7 +30,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         if (loggingIn) return null;
         return "/login";
       }
-      if (loggingIn || splashing) return "/";
+      if (loggingIn || splashing) {
+        final prefs = ref.read(sharedPreferencesProvider);
+        if (await needsOnboarding(prefs) && !session.isDemo) {
+          return "/onboarding";
+        }
+        return "/";
+      }
+      if (onboarding) return null;
       return null;
     },
     routes: [
@@ -36,6 +46,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SplashScreen(),
       ),
       GoRoute(path: "/login", builder: (context, state) => const LoginScreen()),
+      GoRoute(
+        path: "/onboarding",
+        builder: (context, state) => const OnboardingScreen(),
+      ),
       GoRoute(path: "/", builder: (context, state) => const HomeShell()),
     ],
   );

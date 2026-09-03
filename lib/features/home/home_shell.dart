@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
 import "../../core/network/connectivity_providers.dart";
+import "../../core/providers/app_providers.dart";
 import "../../core/push/push_intent.dart";
 import "../../core/push/push_service.dart";
 import "../../core/theme/gravity_palette.dart";
@@ -12,6 +13,7 @@ import "../announcements/announcement_providers.dart";
 import "../community/community_screen.dart";
 import "../notifications/notification_providers.dart";
 import "../notifications/notifications_inbox_screen.dart";
+import "../profile/profile_controller.dart";
 import "../profile/profile_screen.dart";
 import "../scheduling/bookings_screen.dart";
 import "../scheduling/schedule_screen.dart";
@@ -120,6 +122,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     });
 
     final unread = ref.watch(unreadNotificationCountProvider);
+    final session = ref.watch(authSessionProvider).value;
+    final subscription = session == null
+        ? null
+        : ref.watch(memberSubscriptionProvider(session.user.id)).valueOrNull;
+    final billingAlert = subscription?.requiresPaymentAction == true;
     final pages = [
       DashboardScreen(
         onBookClass: () => _goToTab(1),
@@ -141,6 +148,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           children: [
             GravityAppHeader(onNotifications: _openInbox, unreadCount: unread),
             const GravityOfflineBanner(),
+            if (billingAlert)
+              _BillingAlertBanner(
+                onTap: () => _goToTab(4),
+                isPastDue: subscription!.isPastDue,
+              ),
             Expanded(
               child: ClipRect(
                 child: IndexedStack(index: _index, children: pages),
@@ -198,6 +210,59 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BillingAlertBanner extends StatelessWidget {
+  const _BillingAlertBanner({required this.onTap, this.isPastDue = false});
+
+  final VoidCallback onTap;
+  final bool isPastDue;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      liveRegion: true,
+      button: true,
+      label: isPastDue
+          ? "Payment past due. Tap to update billing."
+          : "Membership frozen. Tap to update billing.",
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          color: const Color(0xFFDC2626),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.warning_rounded,
+                color: Colors.white,
+                size: 16,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  isPastDue
+                      ? "Payment past due — tap to update your billing info."
+                      : "Membership frozen — tap to update your billing info.",
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
+            ],
           ),
         ),
       ),

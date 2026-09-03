@@ -26,7 +26,7 @@ class BiometricService {
 
   Future<List<BiometricType>> get availableTypes async {
     try {
-      return _auth.getAvailableBiometrics();
+      return await _auth.getAvailableBiometrics();
     } catch (_) {
       return const [];
     }

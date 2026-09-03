@@ -15,17 +15,19 @@ class NotificationRepository {
 
   bool get _demo => demoMode && demoCatalog != null;
 
-  Future<List<InboxNotification>> listInbox() async {
-    if (_demo) return demoCatalog!.notifications;
-    try {
-      return await _apiClient.getList(
-        "/api/v1/notifications",
-        fromJson: (json) =>
-            InboxNotification.fromJson(json as Map<String, dynamic>),
+  Future<NotificationInbox> listInbox() async {
+    if (_demo) {
+      return NotificationInbox(
+        items: demoCatalog!.notifications,
+        unreadCount: demoCatalog!.notifications
+            .where((item) => !item.read)
+            .length,
       );
-    } catch (_) {
-      return const [];
     }
+    return _apiClient.get(
+      "/api/v1/notifications",
+      fromJson: NotificationInbox.fromJson,
+    );
   }
 
   Future<void> markRead(String id) async {
@@ -33,14 +35,7 @@ class NotificationRepository {
       demoCatalog!.markNotificationRead(id);
       return;
     }
-    try {
-      await _apiClient.post(
-        "/api/v1/notifications/$id/read",
-        fromJson: (json) => json,
-      );
-    } catch (_) {
-      // Inbox still works locally even if the mark-read endpoint is missing.
-    }
+    await _apiClient.postVoid("/api/v1/notifications/$id/read");
   }
 
   Future<void> markAllRead() async {
@@ -48,12 +43,7 @@ class NotificationRepository {
       demoCatalog!.markAllNotificationsRead();
       return;
     }
-    try {
-      await _apiClient.post(
-        "/api/v1/notifications/read-all",
-        fromJson: (json) => json,
-      );
-    } catch (_) {}
+    await _apiClient.postVoid("/api/v1/notifications/read-all");
   }
 
   Future<NotificationPreferences> getPreferences() async {
@@ -82,14 +72,9 @@ class NotificationRepository {
     required String platform,
   }) async {
     if (_demo) return;
-    try {
-      await _apiClient.post(
-        "/api/v1/notifications/register-device",
-        data: {"token": token, "platform": platform},
-        fromJson: (json) => json,
-      );
-    } catch (_) {
-      // FCM is optional until native projects ship a Firebase config.
-    }
+    await _apiClient.postVoid(
+      "/api/v1/notifications/register-device",
+      data: {"token": token, "platform": platform.toLowerCase()},
+    );
   }
 }

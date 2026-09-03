@@ -1,6 +1,7 @@
 import "package:flutter/material.dart";
 
 import "../theme/design_tokens.dart";
+import "../theme/gravity_palette.dart";
 import "gravity_button.dart";
 
 class GravityEmptyState extends StatelessWidget {
@@ -28,10 +29,10 @@ class GravityEmptyState extends StatelessWidget {
         vertical: GravitySpacing.xxl,
       ),
       decoration: BoxDecoration(
-        color: GravityColors.neutral50,
+        color: context.palette.surfaceMuted,
         borderRadius: BorderRadius.circular(GravityRadii.lg),
         border: Border.all(
-          color: GravityColors.neutral300,
+          color: context.palette.border,
           style: BorderStyle.solid,
         ),
       ),
@@ -40,11 +41,11 @@ class GravityEmptyState extends StatelessWidget {
           Container(
             width: 56,
             height: 56,
-            decoration: const BoxDecoration(
-              color: GravityColors.primary50,
+            decoration: BoxDecoration(
+              color: context.palette.accentSurface,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: GravityColors.primary600, size: 28),
+            child: Icon(icon, color: context.palette.accent, size: 28),
           ),
           const SizedBox(height: GravitySpacing.md),
           Text(
@@ -52,7 +53,7 @@ class GravityEmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
-              color: GravityColors.neutral900,
+              color: context.palette.textPrimary,
             ),
           ),
           const SizedBox(height: GravitySpacing.sm),
@@ -60,7 +61,7 @@ class GravityEmptyState extends StatelessWidget {
             description,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: GravityColors.neutral600,
+              color: context.palette.textSecondary,
               height: 1.5,
             ),
           ),

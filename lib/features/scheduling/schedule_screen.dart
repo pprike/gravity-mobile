@@ -1,10 +1,12 @@
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
-import "../../core/api/api_exception.dart";
+import "../../core/api/error_messages.dart";
 import "../../core/theme/design_tokens.dart";
+import "../../core/theme/gravity_palette.dart";
 import "../../core/widgets/gravity_empty_state.dart";
 import "../../core/widgets/gravity_feedback.dart";
+import "../check_in/check_in_sheet.dart";
 import "class_detail_sheet.dart";
 import "models/scheduling_models.dart";
 import "scheduling_formatters.dart";
@@ -27,20 +29,20 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       await ref.read(schedulingRepositoryProvider).bookSession(session.id);
       _invalidate();
       if (mounted) {
-        GravityFeedback.showSnack(
-          context,
-          message: "You're booked for ${session.name}",
+        await GravityFeedback.showBookingConfirmed(
+          context: context,
+          className: session.name,
+          onCheckIn: () => showCheckInSheet(context),
         );
-      }
-    } on ApiException catch (error) {
-      if (mounted) {
-        GravityFeedback.showSnack(context, message: error.message, error: true);
       }
     } catch (error) {
       if (mounted) {
         GravityFeedback.showSnack(
           context,
-          message: error.toString(),
+          message: friendlyErrorMessage(
+            error,
+            fallback: "Couldn’t book that class. Please try again.",
+          ),
           error: true,
         );
       }
@@ -68,15 +70,14 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         }
       }
       _invalidate();
-    } on ApiException catch (error) {
-      if (mounted) {
-        GravityFeedback.showSnack(context, message: error.message, error: true);
-      }
     } catch (error) {
       if (mounted) {
         GravityFeedback.showSnack(
           context,
-          message: error.toString(),
+          message: friendlyErrorMessage(
+            error,
+            fallback: "Couldn’t update the waitlist. Please try again.",
+          ),
           error: true,
         );
       }
@@ -125,43 +126,54 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               Expanded(
                 child: Text(
                   SchedulingFormatters.daySectionTitle(selectedDay),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: GravityColors.gray900,
+                    color: context.palette.textPrimary,
                   ),
                 ),
               ),
-              PopupMenuButton<String?>(
-                onSelected: (value) =>
-                    ref.read(scheduleLocationIdProvider.notifier).state = value,
-                itemBuilder: (context) => [
-                  const PopupMenuItem(value: null, child: Text("All Studios")),
-                  for (final location in locations)
-                    PopupMenuItem(
-                      value: location.id,
-                      child: Text(location.name),
+              if (locations.isNotEmpty)
+                PopupMenuButton<String?>(
+                  onSelected: (value) =>
+                      ref.read(scheduleLocationIdProvider.notifier).state =
+                          value,
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: null,
+                      child: Text("All Studios"),
                     ),
-                ],
-                child: Row(
-                  children: [
-                    Text(
-                      selectedLocationName,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: GravityColors.gray600,
+                    for (final location in locations)
+                      PopupMenuItem(
+                        value: location.id,
+                        child: Text(location.name),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.expand_more,
-                      size: 16,
-                      color: GravityColors.gray600,
-                    ),
                   ],
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minHeight: 44,
+                      minWidth: 44,
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          selectedLocationName,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: context.palette.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.expand_more,
+                          size: 16,
+                          color: context.palette.textSecondary,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -179,7 +191,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                   GravityEmptyState(
                     icon: Icons.error_outline,
                     title: "Could not load schedule",
-                    description: error.toString(),
+                    description: friendlyErrorMessage(error),
                     actionLabel: "Retry",
                     onAction: () => ref.invalidate(classSessionsProvider),
                   ),
@@ -187,14 +199,29 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               ),
               data: (sessions) {
                 if (sessions.isEmpty) {
+                  final now = DateTime.now();
+                  final isToday =
+                      selectedDay.year == now.year &&
+                      selectedDay.month == now.month &&
+                      selectedDay.day == now.day;
                   return ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    children: const [
+                    children: [
                       GravityEmptyState(
                         icon: Icons.calendar_month_outlined,
-                        title: "No classes scheduled",
-                        description:
-                            "Check another day or come back later for new sessions.",
+                        title: isToday
+                            ? "No classes scheduled"
+                            : "Nothing on this day",
+                        description: isToday
+                            ? "Check another day or come back later for new sessions."
+                            : "Try another day — today might still have spots.",
+                        actionLabel: isToday ? null : "Jump to today",
+                        onAction: isToday
+                            ? null
+                            : () {
+                                ref.read(scheduleDayProvider.notifier).state =
+                                    DateTime(now.year, now.month, now.day);
+                              },
                       ),
                     ],
                   );
@@ -250,52 +277,86 @@ class _DaySlider extends StatelessWidget {
     final days = List.generate(7, (index) => start.add(Duration(days: index)));
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: GravityColors.gray200)),
+      decoration: BoxDecoration(
+        color: context.palette.surface,
+        border: Border(bottom: BorderSide(color: context.palette.border)),
       ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: GravitySpacing.lg,
-        vertical: GravitySpacing.md,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: days.map((day) {
-          final isSelected = _sameDay(day, selectedDay);
-          return GestureDetector(
-            onTap: () => onDaySelected(day),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? GravityColors.primary600
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    SchedulingFormatters.weekdayShort(day)[0],
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: isSelected ? Colors.white : GravityColors.gray400,
+      padding: const EdgeInsets.symmetric(vertical: GravitySpacing.sm),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: GravitySpacing.md),
+        child: Row(
+          children: days.map((day) {
+            final isSelected = _sameDay(day, selectedDay);
+            return Semantics(
+              button: true,
+              selected: isSelected,
+              label: SchedulingFormatters.daySectionTitle(day),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Material(
+                  color: isSelected
+                      ? context.palette.accent
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    onTap: () => onDaySelected(day),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        minWidth: 48,
+                        minHeight: 48,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            SchedulingFormatters.weekdayShort(day),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected
+                                  ? context.palette.onAccent
+                                  : context.palette.textMuted,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            SchedulingFormatters.dayNumber(day),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: isSelected
+                                  ? context.palette.onAccent
+                                  : context.palette.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          SizedBox(
+                            width: 4,
+                            height: 4,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: _sameDay(day, start) && !isSelected
+                                    ? context.palette.accent
+                                    : Colors.transparent,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    SchedulingFormatters.dayNumber(day),
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: isSelected ? Colors.white : GravityColors.gray900,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }

@@ -28,6 +28,8 @@ class DemoCatalog extends ChangeNotifier {
   late NotificationPreferences preferences;
   late List<ChatGroup> chatGroups;
   late Map<String, List<ChatMessage>> messagesByGroup;
+  late List<BookingHistoryEntry> history;
+  late Set<DateTime> _visitDays;
   int _bookingSeq = 0;
   int _messageSeq = 0;
 
@@ -74,6 +76,11 @@ class DemoCatalog extends ChangeNotifier {
     );
     sessions = _seedSessions();
     bookings = [];
+    history = _seedHistory();
+    _visitDays = history
+        .where((entry) => entry.isCompleted)
+        .map((entry) => _dayOf(entry.startsAt))
+        .toSet();
     announcements = [
       Announcement(
         id: "ann-1",
@@ -199,6 +206,96 @@ class DemoCatalog extends ChangeNotifier {
       ..sort((a, b) => a.startsAt.compareTo(b.startsAt));
   }
 
+  BookingHistoryPage listBookingHistory({
+    String? status,
+    int page = 0,
+    int size = 20,
+  }) {
+    final matching = history.where((entry) {
+      return switch (status) {
+        "completed" => entry.isCompleted,
+        "cancelled" => entry.isCancelled,
+        "confirmed" => !entry.isCompleted && !entry.isCancelled,
+        _ => true,
+      };
+    }).toList()..sort((a, b) => b.startsAt.compareTo(a.startsAt));
+
+    final start = (page * size).clamp(0, matching.length);
+    final end = (start + size).clamp(0, matching.length);
+    return BookingHistoryPage(
+      items: matching.sublist(start, end),
+      page: page,
+      size: size,
+      totalElements: matching.length,
+    );
+  }
+
+  AttendanceSummary attendanceSummary() {
+    if (_visitDays.isEmpty) return const AttendanceSummary();
+    final now = DateTime.now();
+    final visitsThisMonth = _visitDays
+        .where((day) => day.year == now.year && day.month == now.month)
+        .length;
+    final sorted = _visitDays.toList()..sort();
+    final spanWeeks = (sorted.last.difference(sorted.first).inDays / 7)
+        .ceil()
+        .clamp(1, 520);
+
+    var longest = 1;
+    var current = 1;
+    for (var i = 1; i < sorted.length; i++) {
+      if (sorted[i].difference(sorted[i - 1]).inDays == 1) {
+        current += 1;
+      } else {
+        current = 1;
+      }
+      if (current > longest) longest = current;
+    }
+
+    return AttendanceSummary(
+      totalVisits: _visitDays.length,
+      visitsThisMonth: visitsThisMonth,
+      averagePerWeek: double.parse(
+        (_visitDays.length / spanWeeks).toStringAsFixed(1),
+      ),
+      longestStreakDays: longest,
+    );
+  }
+
+  static DateTime _dayOf(DateTime value) =>
+      DateTime(value.year, value.month, value.day);
+
+  List<BookingHistoryEntry> _seedHistory() {
+    final now = DateTime.now();
+    BookingHistoryEntry past(
+      int daysAgo,
+      int hour,
+      String name,
+      String coach, {
+      String status = "completed",
+    }) {
+      final day = now.subtract(Duration(days: daysAgo));
+      return BookingHistoryEntry(
+        id: "history-$daysAgo-$hour",
+        className: name,
+        startsAt: DateTime(day.year, day.month, day.day, hour),
+        status: status,
+        coachName: coach,
+      );
+    }
+
+    return [
+      past(1, 6, "Sunrise Flow", "Elena Rostova"),
+      past(2, 18, "Power Hour", "Marcus Vance"),
+      past(3, 6, "Sunrise Flow", "Elena Rostova"),
+      past(5, 19, "Olympic Weightlifting", "Marcus Vance"),
+      past(6, 9, "Reformer Pilates", "Nina Patel"),
+      past(8, 18, "Power Hour", "Marcus Vance", status: "cancelled"),
+      past(9, 6, "Sunrise Flow", "Elena Rostova"),
+      past(12, 19, "Conditioning Circuit", "Dre Coleman"),
+    ];
+  }
+
   ClassBooking bookSession(String sessionId, {bool notify = true}) {
     final index = sessions.indexWhere((session) => session.id == sessionId);
     if (index < 0) {
@@ -239,6 +336,15 @@ class DemoCatalog extends ChangeNotifier {
       coachName: session.coachName,
     );
     bookings.add(booking);
+    history.add(
+      BookingHistoryEntry(
+        id: booking.bookingId,
+        className: session.name,
+        startsAt: session.startsAt,
+        status: "confirmed",
+        coachName: session.coachName,
+      ),
+    );
     if (notify) notifyListeners();
     return ClassBooking(
       id: booking.bookingId,
@@ -255,6 +361,19 @@ class DemoCatalog extends ChangeNotifier {
       throw StateError("Booking not found");
     }
     final booking = bookings.removeAt(bookingIndex);
+    final historyIndex = history.indexWhere(
+      (item) => item.id == booking.bookingId,
+    );
+    if (historyIndex >= 0) {
+      final entry = history[historyIndex];
+      history[historyIndex] = BookingHistoryEntry(
+        id: entry.id,
+        className: entry.className,
+        startsAt: entry.startsAt,
+        status: "cancelled",
+        coachName: entry.coachName,
+      );
+    }
     final sessionIndex = sessions.indexWhere(
       (session) => session.id == booking.sessionId,
     );
@@ -318,6 +437,22 @@ class DemoCatalog extends ChangeNotifier {
         phone: request.phone ?? current.phone,
         avatarUrl: current.avatarUrl,
         emergencyContact: request.emergencyContact ?? current.emergencyContact,
+      ),
+    );
+    notifyListeners();
+    return profile;
+  }
+
+  UserProfile uploadAvatar(String filePath) {
+    final current = profile.member ?? const MemberProfileData();
+    profile = UserProfile(
+      userId: profile.userId,
+      roles: profile.roles,
+      member: MemberProfileData(
+        displayName: current.displayName,
+        phone: current.phone,
+        avatarUrl: filePath,
+        emergencyContact: current.emergencyContact,
       ),
     );
     notifyListeners();

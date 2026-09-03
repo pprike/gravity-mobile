@@ -42,16 +42,12 @@ class ProfileController extends StateNotifier<AsyncValue<UserProfile?>> {
   }
 
   Future<void> save(UpdateProfileRequest request) async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(
-      () => _repository.updateProfile(_userId, request),
-    );
+    final next = await _repository.updateProfile(_userId, request);
+    state = AsyncValue.data(next);
   }
 
   Future<void> uploadAvatar(String filePath) async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(
-      () => _repository.uploadAvatar(_userId, filePath),
-    );
+    final next = await _repository.uploadAvatar(_userId, filePath);
+    state = AsyncValue.data(next);
   }
 }

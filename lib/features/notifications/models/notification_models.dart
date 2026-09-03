@@ -36,7 +36,10 @@ class InboxNotification {
             (json["sentAt"] as String?) ??
             DateTime.now().toIso8601String(),
       ).toLocal(),
-      read: json["read"] as bool? ?? json["isRead"] as bool? ?? false,
+      read:
+          json["read"] as bool? ??
+          json["isRead"] as bool? ??
+          json["readAt"] != null,
       category:
           json["category"] as String? ??
           json["type"] as String? ??
@@ -79,6 +82,39 @@ class NotificationPreferences {
       announcements: json["announcements"] as bool? ?? true,
       classMessages: json["classMessages"] as bool? ?? true,
       marketing: json["marketing"] as bool? ?? false,
+    );
+  }
+}
+
+class NotificationInbox {
+  const NotificationInbox({required this.items, this.unreadCount = 0});
+
+  final List<InboxNotification> items;
+  final int unreadCount;
+
+  factory NotificationInbox.fromJson(Object? json) {
+    if (json is List<dynamic>) {
+      final items = json
+          .map(
+            (item) => InboxNotification.fromJson(item as Map<String, dynamic>),
+          )
+          .toList();
+      return NotificationInbox(
+        items: items,
+        unreadCount: items.where((item) => !item.read).length,
+      );
+    }
+
+    final map = json as Map<String, dynamic>;
+    final rawItems = map["items"] as List<dynamic>? ?? const [];
+    final items = rawItems
+        .map((item) => InboxNotification.fromJson(item as Map<String, dynamic>))
+        .toList();
+    return NotificationInbox(
+      items: items,
+      unreadCount:
+          (map["unreadCount"] as num?)?.toInt() ??
+          items.where((item) => !item.read).length,
     );
   }
 }

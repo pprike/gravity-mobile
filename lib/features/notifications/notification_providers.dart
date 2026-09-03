@@ -1,4 +1,3 @@
-import "package:flutter/foundation.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
 import "../../core/providers/app_providers.dart";
@@ -13,9 +12,7 @@ final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
   );
 });
 
-final inboxProvider = FutureProvider.autoDispose<List<InboxNotification>>((
-  ref,
-) {
+final inboxProvider = FutureProvider.autoDispose<NotificationInbox>((ref) {
   ref.watch(demoCatalogProvider);
   return ref.watch(notificationRepositoryProvider).listInbox();
 });
@@ -23,10 +20,7 @@ final inboxProvider = FutureProvider.autoDispose<List<InboxNotification>>((
 final unreadNotificationCountProvider = Provider<int>((ref) {
   return ref
       .watch(inboxProvider)
-      .maybeWhen(
-        data: (items) => items.where((item) => !item.read).length,
-        orElse: () => 0,
-      );
+      .maybeWhen(data: (inbox) => inbox.unreadCount, orElse: () => 0);
 });
 
 final notificationPreferencesProvider =
@@ -34,12 +28,3 @@ final notificationPreferencesProvider =
       ref.watch(demoCatalogProvider);
       return ref.watch(notificationRepositoryProvider).getPreferences();
     });
-
-String notificationPlatformLabel() {
-  if (kIsWeb) return "WEB";
-  return switch (defaultTargetPlatform) {
-    TargetPlatform.iOS => "IOS",
-    TargetPlatform.android => "ANDROID",
-    _ => "WEB",
-  };
-}

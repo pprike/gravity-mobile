@@ -24,11 +24,13 @@ class AuthUser {
 
   factory AuthUser.fromJson(Map<String, dynamic> json) {
     return AuthUser(
-      id: json["id"] as String,
+      id: json["id"].toString(),
       email: json["email"] as String,
       firstName: json["firstName"] as String?,
       lastName: json["lastName"] as String?,
-      roles: (json["roles"] as List<dynamic>).map((e) => e as String).toList(),
+      roles: (json["roles"] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(),
     );
   }
 
@@ -61,6 +63,33 @@ class AuthSession {
   final bool isDemo;
 
   bool get isExpired => DateTime.now().isAfter(expiresAt);
+
+  factory AuthSession.fromAuthTokens(Map<String, dynamic> json) {
+    final expiresIn = (json["expiresIn"] as num).toInt();
+    return AuthSession(
+      accessToken: json["accessToken"] as String,
+      refreshToken: json["refreshToken"] as String,
+      expiresIn: expiresIn,
+      user: AuthUser.fromJson(json["user"] as Map<String, dynamic>),
+      expiresAt: DateTime.now().add(Duration(seconds: expiresIn)),
+    );
+  }
+
+  factory AuthSession.fromLoginData(Map<String, dynamic> data) {
+    if (data["tenantSelectionRequired"] == true) {
+      throw const FormatException(
+        "This email is in more than one studio. Open studio ID and enter tenant-a.",
+      );
+    }
+    final auth = data["auth"];
+    if (auth is Map<String, dynamic>) {
+      return AuthSession.fromAuthTokens(auth);
+    }
+    if (data["accessToken"] is String) {
+      return AuthSession.fromAuthTokens(data);
+    }
+    throw const FormatException("Sign-in did not return a session.");
+  }
 
   factory AuthSession.fromJson(Map<String, dynamic> json) {
     return AuthSession(

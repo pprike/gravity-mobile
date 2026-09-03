@@ -1,4 +1,5 @@
 import "../api/api_client.dart";
+import "../api/api_exception.dart";
 import "../demo/demo_catalog.dart";
 import "auth_session.dart";
 import "auth_storage.dart";
@@ -35,23 +36,18 @@ class AuthRepository {
   Future<AuthSession?> currentSession() => _authStorage.readSession();
 
   Future<AuthSession> login(LoginRequest request) async {
-    final data = await _apiClient.post<Map<String, dynamic>>(
-      "/api/v1/auth/login",
-      data: request.toJson(),
-      fromJson: (json) => json as Map<String, dynamic>,
-    );
-
-    final session = AuthSession(
-      accessToken: data["accessToken"] as String,
-      refreshToken: data["refreshToken"] as String,
-      expiresIn: data["expiresIn"] as int,
-      user: AuthUser.fromJson(data["user"] as Map<String, dynamic>),
-      expiresAt: DateTime.now().add(
-        Duration(seconds: data["expiresIn"] as int),
-      ),
-    );
-    await _authStorage.saveSession(session);
-    return session;
+    try {
+      final data = await _apiClient.post<Map<String, dynamic>>(
+        "/api/v1/auth/login",
+        data: request.toJson(),
+        fromJson: (json) => json as Map<String, dynamic>,
+      );
+      final session = AuthSession.fromLoginData(data);
+      await _authStorage.saveSession(session);
+      return session;
+    } on FormatException catch (error) {
+      throw ApiException(message: error.message, code: "LOGIN_FAILED");
+    }
   }
 
   Future<AuthSession> loginDemo() async {
@@ -61,14 +57,33 @@ class AuthRepository {
     return session;
   }
 
+  Future<void> forgotPassword({
+    required String email,
+    required String tenantSlug,
+  }) {
+    return _apiClient.postVoid(
+      "/api/v1/auth/forgot-password",
+      data: {"email": email, "tenantSlug": tenantSlug},
+    );
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) {
+    return _apiClient.postVoid(
+      "/api/v1/me/password",
+      data: {"currentPassword": currentPassword, "newPassword": newPassword},
+    );
+  }
+
   Future<void> logout() async {
     final session = await _authStorage.readSession();
     if (session != null && !session.isDemo) {
       try {
-        await _apiClient.post<dynamic>(
+        await _apiClient.postVoid(
           "/api/v1/auth/logout",
           data: {"refreshToken": session.refreshToken},
-          fromJson: (json) => json,
         );
       } catch (_) {
         // Best-effort server logout.

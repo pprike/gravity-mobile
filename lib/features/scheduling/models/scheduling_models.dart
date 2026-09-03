@@ -188,6 +188,123 @@ class WaitlistStatus {
   }
 }
 
+/// One row of booking history. Unlike [UpcomingBooking] the status here is the
+/// server's computed display status, so it can also be `completed`.
+class BookingHistoryEntry {
+  const BookingHistoryEntry({
+    required this.id,
+    required this.className,
+    required this.startsAt,
+    required this.status,
+    this.coachName,
+  });
+
+  final String id;
+  final String className;
+  final DateTime startsAt;
+  final String status;
+  final String? coachName;
+
+  bool get isCompleted => status.toLowerCase() == "completed";
+  bool get isCancelled => status.toLowerCase() == "cancelled";
+
+  factory BookingHistoryEntry.fromJson(Map<String, dynamic> json) {
+    return BookingHistoryEntry(
+      id: json["id"] as String,
+      className: json["className"] as String? ?? "Class",
+      startsAt: DateTime.parse(json["startsAt"] as String).toLocal(),
+      status: json["status"] as String? ?? "confirmed",
+      coachName: json["coachName"] as String?,
+    );
+  }
+}
+
+class BookingHistoryPage {
+  const BookingHistoryPage({
+    required this.items,
+    this.page = 0,
+    this.size = 50,
+    this.totalElements = 0,
+  });
+
+  final List<BookingHistoryEntry> items;
+  final int page;
+  final int size;
+  final int totalElements;
+
+  bool get hasMore => (page + 1) * size < totalElements;
+
+  factory BookingHistoryPage.fromJson(Map<String, dynamic> json) {
+    final rawItems = json["items"] as List<dynamic>? ?? const [];
+    return BookingHistoryPage(
+      items: rawItems
+          .map(
+            (item) =>
+                BookingHistoryEntry.fromJson(item as Map<String, dynamic>),
+          )
+          .toList(),
+      page: (json["page"] as num?)?.toInt() ?? 0,
+      size: (json["size"] as num?)?.toInt() ?? 50,
+      totalElements: (json["totalElements"] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+class AttendanceSummary {
+  const AttendanceSummary({
+    this.totalVisits = 0,
+    this.visitsThisMonth = 0,
+    this.averagePerWeek = 0,
+    this.longestStreakDays = 0,
+  });
+
+  final int totalVisits;
+  final int visitsThisMonth;
+  final double averagePerWeek;
+  final int longestStreakDays;
+
+  bool get isEmpty => totalVisits == 0;
+
+  factory AttendanceSummary.fromJson(Map<String, dynamic> json) {
+    return AttendanceSummary(
+      totalVisits: (json["totalVisits"] as num?)?.toInt() ?? 0,
+      visitsThisMonth: (json["visitsThisMonth"] as num?)?.toInt() ?? 0,
+      averagePerWeek: (json["averagePerWeek"] as num?)?.toDouble() ?? 0,
+      longestStreakDays: (json["longestStreakDays"] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+class BookingPolicy {
+  const BookingPolicy({
+    this.cancellationWindowHours = 12,
+    this.advanceBookingLimitDays = 14,
+    this.maxActiveBookings,
+    this.waitlistEnabled = true,
+  });
+
+  final int cancellationWindowHours;
+  final int advanceBookingLimitDays;
+  final int? maxActiveBookings;
+  final bool waitlistEnabled;
+
+  factory BookingPolicy.fromJson(Map<String, dynamic> json) {
+    return BookingPolicy(
+      cancellationWindowHours: json["cancellationWindowHours"] as int? ?? 12,
+      advanceBookingLimitDays: json["advanceBookingLimitDays"] as int? ?? 14,
+      maxActiveBookings: json["maxActiveBookings"] as int?,
+      waitlistEnabled: json["waitlistEnabled"] as bool? ?? true,
+    );
+  }
+
+  /// Whether a class starting at [startsAt] is still inside the free-cancel
+  /// window.
+  bool canCancelFreely(DateTime startsAt) {
+    return startsAt.difference(DateTime.now()).inHours >=
+        cancellationWindowHours;
+  }
+}
+
 class StudioLocation {
   const StudioLocation({required this.id, required this.name});
 

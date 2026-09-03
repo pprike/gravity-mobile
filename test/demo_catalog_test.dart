@@ -1,6 +1,7 @@
 import "package:flutter_test/flutter_test.dart";
 
 import "package:gravity_mobile/core/demo/demo_catalog.dart";
+import "package:gravity_mobile/features/profile/models/user_profile.dart";
 
 void main() {
   group("DemoCatalog", () {
@@ -56,6 +57,23 @@ void main() {
       catalog.sendMessage(groupId: "chat-studio", body: "See you at 6");
       expect(catalog.messagesByGroup["chat-studio"]!.length, before + 1);
       expect(catalog.messagesByGroup["chat-studio"]!.last.mine, isTrue);
+    });
+
+    test("updates profile details and avatar", () {
+      final catalog = DemoCatalog();
+      catalog.updateProfile(
+        const UpdateProfileRequest(
+          displayName: "Alex Rivera",
+          phone: "+1 555 0100",
+        ),
+      );
+      expect(catalog.profile.member?.phone, "+1 555 0100");
+
+      catalog.uploadAvatar("assets/images/member_avatar.jpg");
+      expect(
+        catalog.profile.member?.avatarUrl,
+        "assets/images/member_avatar.jpg",
+      );
     });
 
     test("updates notification preferences and marks inbox read", () {

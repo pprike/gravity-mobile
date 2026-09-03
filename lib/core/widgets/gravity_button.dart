@@ -1,6 +1,7 @@
 import "package:flutter/material.dart";
 
 import "../theme/design_tokens.dart";
+import "../theme/gravity_palette.dart";
 
 enum GravityButtonVariant { primary, secondary, tertiary, destructive }
 
@@ -26,12 +27,12 @@ class GravityButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final enabled = onPressed != null && !isLoading;
     final child = isLoading
-        ? const SizedBox(
+        ? SizedBox(
             width: 18,
             height: 18,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: Colors.white,
+              color: context.palette.onAccent,
             ),
           )
         : Row(
@@ -42,32 +43,37 @@ class GravityButton extends StatelessWidget {
                 Icon(icon, size: 18),
                 const SizedBox(width: GravitySpacing.sm),
               ],
-              Text(label),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 2,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           );
 
     final style = switch (variant) {
       GravityButtonVariant.primary => ElevatedButton.styleFrom(
-        backgroundColor: GravityColors.primary600,
-        foregroundColor: Colors.white,
-        disabledBackgroundColor: GravityColors.primary600.withValues(
-          alpha: 0.6,
-        ),
-        disabledForegroundColor: Colors.white,
+        backgroundColor: context.palette.accent,
+        foregroundColor: context.palette.onAccent,
+        disabledBackgroundColor: context.palette.accent.withValues(alpha: 0.6),
+        disabledForegroundColor: context.palette.onAccent,
         elevation: 0,
       ),
       GravityButtonVariant.secondary => OutlinedButton.styleFrom(
-        foregroundColor: GravityColors.neutral900,
-        side: const BorderSide(color: GravityColors.neutral300),
-        backgroundColor: Colors.white,
+        foregroundColor: context.palette.textPrimary,
+        side: BorderSide(color: context.palette.border),
+        backgroundColor: context.palette.surface,
       ),
       GravityButtonVariant.tertiary => TextButton.styleFrom(
-        foregroundColor: GravityColors.neutral700,
+        foregroundColor: context.palette.textSecondary,
         backgroundColor: Colors.transparent,
       ),
       GravityButtonVariant.destructive => ElevatedButton.styleFrom(
-        backgroundColor: GravityColors.danger600,
-        foregroundColor: Colors.white,
+        backgroundColor: context.palette.danger,
+        foregroundColor: context.palette.onAccent,
         elevation: 0,
       ),
     };

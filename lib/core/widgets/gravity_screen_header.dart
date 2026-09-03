@@ -1,6 +1,7 @@
 import "package:flutter/material.dart";
 
 import "../theme/design_tokens.dart";
+import "../theme/gravity_palette.dart";
 
 class GravityScreenHeader extends StatelessWidget {
   const GravityScreenHeader({
@@ -22,11 +23,11 @@ class GravityScreenHeader extends StatelessWidget {
         if (eyebrow != null) ...[
           Text(
             eyebrow!.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.2,
-              color: GravityColors.primary600,
+              color: context.palette.accent,
             ),
           ),
           const SizedBox(height: GravitySpacing.sm),
@@ -35,7 +36,7 @@ class GravityScreenHeader extends StatelessWidget {
           title,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.w600,
-            color: GravityColors.neutral900,
+            color: context.palette.textPrimary,
             letterSpacing: -0.5,
           ),
         ),
@@ -44,7 +45,7 @@ class GravityScreenHeader extends StatelessWidget {
           Text(
             subtitle!,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: GravityColors.neutral600,
+              color: context.palette.textSecondary,
               height: 1.5,
             ),
           ),

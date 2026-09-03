@@ -69,6 +69,21 @@ class SchedulingFormatters {
     return "${timeOfDay(startsAt)} $dayLabel";
   }
 
+  static String greeting(DateTime date) {
+    final hour = date.hour;
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  }
+
+  static String longDateLabel(DateTime date) {
+    return "${_weekdays[date.weekday - 1]}, ${date.day} ${_months[date.month - 1]}";
+  }
+
+  static String shortDate(DateTime date) {
+    return "${weekdayShort(date)} ${date.day} ${_months[date.month - 1].substring(0, 3)}";
+  }
+
   static String bookingDateLabel(DateTime date) {
     final today = DateTime.now();
     final startDay = DateTime(date.year, date.month, date.day);

@@ -1,6 +1,7 @@
 import "package:flutter/material.dart";
 
 import "../theme/design_tokens.dart";
+import "../theme/gravity_palette.dart";
 
 class GravityInput extends StatelessWidget {
   const GravityInput({
@@ -33,10 +34,10 @@ class GravityInput extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: GravityColors.neutral800,
+            color: context.palette.textPrimary,
           ),
         ),
         const SizedBox(height: 6),
@@ -47,34 +48,34 @@ class GravityInput extends StatelessWidget {
           textInputAction: textInputAction,
           onSubmitted: onSubmitted,
           autofillHints: autofillHints,
-          style: const TextStyle(fontSize: 14, color: GravityColors.neutral900),
+          style: TextStyle(fontSize: 14, color: context.palette.textPrimary),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: GravityColors.neutral500),
+            hintStyle: TextStyle(color: context.palette.textMuted),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: context.palette.surface,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 12,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(GravityRadii.md),
-              borderSide: const BorderSide(color: GravityColors.neutral300),
+              borderSide: BorderSide(color: context.palette.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(GravityRadii.md),
               borderSide: BorderSide(
                 color: error != null
-                    ? GravityColors.danger600
-                    : GravityColors.neutral300,
+                    ? context.palette.danger
+                    : context.palette.border,
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(GravityRadii.md),
               borderSide: BorderSide(
                 color: error != null
-                    ? GravityColors.danger600
-                    : GravityColors.primary500,
+                    ? context.palette.danger
+                    : context.palette.accent,
                 width: 2,
               ),
             ),
@@ -84,10 +85,7 @@ class GravityInput extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             error!,
-            style: const TextStyle(
-              fontSize: 13,
-              color: GravityColors.danger600,
-            ),
+            style: TextStyle(fontSize: 13, color: context.palette.danger),
           ),
         ],
       ],

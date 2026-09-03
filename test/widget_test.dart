@@ -29,6 +29,17 @@ void main() {
     expect(find.text("Explore demo studio"), findsOneWidget);
   });
 
+  testWidgets("sign in requires an email", (WidgetTester tester) async {
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, "");
+    await tester.tap(find.widgetWithText(ElevatedButton, "Sign In"));
+    await tester.pump();
+
+    expect(find.text("Enter the email you use at the studio."), findsOneWidget);
+  });
+
   testWidgets("demo studio opens the member dashboard", (
     WidgetTester tester,
   ) async {
@@ -37,9 +48,9 @@ void main() {
 
     await tester.tap(find.text("Explore demo studio"));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.textContaining("Hello, Alex"), findsOneWidget);
+    expect(find.text("Alex"), findsOneWidget);
     expect(find.text("Book class"), findsOneWidget);
     expect(find.text("Check in"), findsOneWidget);
   });

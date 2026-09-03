@@ -4,6 +4,7 @@ import "package:go_router/go_router.dart";
 
 import "../core/providers/app_providers.dart";
 import "../features/auth/login_screen.dart";
+import "../features/auth/splash_screen.dart";
 import "../features/home/home_shell.dart";
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -13,18 +14,27 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: "/login",
     refreshListenable: _AuthRefreshListenable(ref),
     redirect: (context, state) {
-      if (authState.isLoading) return null;
+      final loggingIn = state.matchedLocation == "/login";
+      final splashing = state.matchedLocation == "/splash";
+
+      if (authState.isLoading) {
+        return splashing ? null : "/splash";
+      }
 
       final session = authState.valueOrNull;
-      final loggingIn = state.matchedLocation == "/login";
 
       if (session == null) {
-        return loggingIn ? null : "/login";
+        if (loggingIn) return null;
+        return "/login";
       }
-      if (loggingIn) return "/";
+      if (loggingIn || splashing) return "/";
       return null;
     },
     routes: [
+      GoRoute(
+        path: "/splash",
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(path: "/login", builder: (context, state) => const LoginScreen()),
       GoRoute(path: "/", builder: (context, state) => const HomeShell()),
     ],

@@ -1,6 +1,6 @@
 import "package:flutter/material.dart";
 
-import "../theme/design_tokens.dart";
+import "../theme/gravity_palette.dart";
 
 class GravitySectionHeader extends StatelessWidget {
   const GravitySectionHeader({
@@ -21,24 +21,27 @@ class GravitySectionHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: GravityColors.gray900,
+              color: context.palette.textPrimary,
             ),
           ),
         ),
         if (actionLabel != null && onAction != null)
-          GestureDetector(
-            onTap: onAction,
-            child: Text(
-              actionLabel!,
-              style: const TextStyle(
+          TextButton(
+            onPressed: onAction,
+            style: TextButton.styleFrom(
+              foregroundColor: context.palette.accent,
+              minimumSize: const Size(48, 44),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              visualDensity: VisualDensity.compact,
+              textStyle: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: GravityColors.primary600,
               ),
             ),
+            child: Text(actionLabel!),
           ),
       ],
     );

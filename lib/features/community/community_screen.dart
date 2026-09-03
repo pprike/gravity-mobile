@@ -1,11 +1,14 @@
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
+import "../../core/api/error_messages.dart";
 import "../../core/theme/design_tokens.dart";
+import "../../core/theme/gravity_palette.dart";
 import "../../core/widgets/gravity_card.dart";
 import "../../core/widgets/gravity_empty_state.dart";
 import "../announcements/announcement_providers.dart";
 import "../announcements/models/announcement.dart";
+import "../scheduling/scheduling_formatters.dart";
 import "chat_conversation_screen.dart";
 import "chat_providers.dart";
 import "models/chat_models.dart";
@@ -20,8 +23,8 @@ class CommunityScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -30,23 +33,26 @@ class CommunityScreen extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
-                    color: GravityColors.gray900,
+                    color: context.palette.textPrimary,
                   ),
                 ),
-                SizedBox(height: 6),
+                const SizedBox(height: 6),
                 Text(
                   "Studio news and group chat with your gym.",
-                  style: TextStyle(fontSize: 14, color: GravityColors.gray600),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: context.palette.textSecondary,
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 12),
-          const TabBar(
-            labelColor: GravityColors.primary700,
-            unselectedLabelColor: GravityColors.gray400,
-            indicatorColor: GravityColors.primary600,
-            tabs: [
+          TabBar(
+            labelColor: context.palette.accentStrong,
+            unselectedLabelColor: context.palette.textMuted,
+            indicatorColor: context.palette.accent,
+            tabs: const [
               Tab(text: "Updates"),
               Tab(text: "Chat"),
             ],
@@ -78,7 +84,7 @@ class _UpdatesTab extends ConsumerWidget {
             GravityEmptyState(
               icon: Icons.error_outline,
               title: "Could not load announcements",
-              description: error.toString(),
+              description: friendlyErrorMessage(error),
               actionLabel: "Retry",
               onAction: () => ref.invalidate(announcementsProvider),
             ),
@@ -127,10 +133,10 @@ class _AnnouncementCard extends StatelessWidget {
         children: [
           Text(
             announcement.title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: GravityColors.gray900,
+              color: context.palette.textPrimary,
             ),
           ),
           if (announcement.authorName != null ||
@@ -140,21 +146,21 @@ class _AnnouncementCard extends StatelessWidget {
               [
                 ?announcement.authorName,
                 if (announcement.publishedAt != null)
-                  "${announcement.publishedAt!.month}/${announcement.publishedAt!.day}",
+                  SchedulingFormatters.shortDate(announcement.publishedAt!),
               ].join(" • "),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: GravityColors.gray500,
+                color: context.palette.textSecondary,
               ),
             ),
           ],
           const SizedBox(height: GravitySpacing.sm),
           Text(
             announcement.body,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               height: 1.45,
-              color: GravityColors.gray600,
+              color: context.palette.textSecondary,
             ),
           ),
         ],
@@ -174,15 +180,17 @@ class _ChatTab extends ConsumerWidget {
       error: (error, _) => GravityEmptyState(
         icon: Icons.error_outline,
         title: "Chat is unavailable",
-        description: error.toString(),
+        description: friendlyErrorMessage(error),
+        actionLabel: "Retry",
+        onAction: () => ref.invalidate(chatGroupsProvider),
       ),
       data: (groups) {
         if (groups.isEmpty) {
           return const GravityEmptyState(
             icon: Icons.forum_outlined,
-            title: "Chat is rolling out",
+            title: "Chat isn’t available yet",
             description:
-                "Your studio groups will appear here as soon as they’re enabled.",
+                "Your studio hasn’t opened group chat. Studio news still lives in Updates.",
           );
         }
         return ListView.separated(
@@ -207,7 +215,7 @@ class _GroupTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: context.palette.surface,
       borderRadius: BorderRadius.circular(GravityRadii.lg),
       child: InkWell(
         borderRadius: BorderRadius.circular(GravityRadii.lg),
@@ -222,7 +230,7 @@ class _GroupTile extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(GravityRadii.lg),
-            border: Border.all(color: GravityColors.gray200),
+            border: Border.all(color: context.palette.border),
           ),
           child: Row(
             children: [
@@ -230,14 +238,14 @@ class _GroupTile extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: GravityColors.primary50,
+                  color: context.palette.accentSurface,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
                   group.type == "class"
                       ? Icons.fitness_center_rounded
                       : Icons.forum_rounded,
-                  color: GravityColors.primary700,
+                  color: context.palette.accentStrong,
                 ),
               ),
               const SizedBox(width: 12),
@@ -247,26 +255,26 @@ class _GroupTile extends StatelessWidget {
                   children: [
                     Text(
                       group.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: GravityColors.gray900,
+                        color: context.palette.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       group.subtitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: GravityColors.gray500,
+                        color: context.palette.textSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: GravityColors.gray400,
+                color: context.palette.textMuted,
               ),
             ],
           ),

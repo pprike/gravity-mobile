@@ -1,6 +1,8 @@
 import "package:flutter/material.dart";
 
 import "../../../core/theme/design_tokens.dart";
+import "../../../core/theme/gravity_palette.dart";
+import "../../../core/theme/text_scaling.dart";
 import "../models/scheduling_models.dart";
 import "../scheduling_formatters.dart";
 
@@ -27,7 +29,7 @@ class ClassSessionCard extends StatelessWidget {
     final isFull = session.isFull && !isBooked;
 
     return Material(
-      color: Colors.white,
+      color: context.palette.surface,
       borderRadius: BorderRadius.circular(GravityRadii.lg),
       child: InkWell(
         onTap: onOpen,
@@ -35,31 +37,31 @@ class ClassSessionCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(GravityRadii.lg),
-            border: Border.all(color: GravityColors.gray200),
+            border: Border.all(color: context.palette.border),
           ),
           padding: const EdgeInsets.all(GravitySpacing.md),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
-                width: 70,
+                width: context.scaled(70),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       SchedulingFormatters.timeOfDay(session.startsAt),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: GravityColors.gray900,
+                        color: context.palette.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       SchedulingFormatters.durationLabel(session.duration),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: GravityColors.gray400,
+                        color: context.palette.textMuted,
                       ),
                     ),
                   ],
@@ -67,8 +69,8 @@ class ClassSessionCard extends StatelessWidget {
               ),
               Container(
                 width: 1,
-                height: 48,
-                color: GravityColors.gray200,
+                height: context.scaled(48),
+                color: context.palette.border,
                 margin: const EdgeInsets.symmetric(
                   horizontal: GravitySpacing.sm,
                 ),
@@ -79,18 +81,18 @@ class ClassSessionCard extends StatelessWidget {
                   children: [
                     Text(
                       session.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: GravityColors.gray900,
+                        color: context.palette.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       session.coachLabel,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: GravityColors.gray600,
+                        color: context.palette.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -106,7 +108,7 @@ class ClassSessionCard extends StatelessWidget {
               ),
               const SizedBox(width: GravitySpacing.sm),
               SizedBox(
-                width: 82,
+                width: context.scaled(82),
                 child: _ActionButton(
                   isBooked: isBooked,
                   isFull: isFull,
@@ -156,8 +158,8 @@ class _SpotsTag extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: cancelled || (isFull && !waitlisted)
-            ? GravityColors.danger50
-            : GravityColors.primary50,
+            ? context.palette.dangerSurface
+            : context.palette.accentSurface,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
@@ -166,8 +168,8 @@ class _SpotsTag extends StatelessWidget {
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: cancelled || (isFull && !waitlisted)
-              ? GravityColors.danger600
-              : GravityColors.primary600,
+              ? context.palette.danger
+              : context.palette.accentStrong,
         ),
       ),
     );
@@ -218,13 +220,16 @@ class _ActionButton extends StatelessWidget {
       onPressed: enabled ? onPressed : null,
       style: TextButton.styleFrom(
         backgroundColor: enabled
-            ? GravityColors.primary600
-            : GravityColors.neutral50,
-        foregroundColor: enabled ? Colors.white : GravityColors.gray400,
-        disabledBackgroundColor: GravityColors.neutral50,
-        disabledForegroundColor: GravityColors.gray400,
-        side: enabled ? null : const BorderSide(color: GravityColors.gray200),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+            ? context.palette.accent
+            : context.palette.surfaceMuted,
+        foregroundColor: enabled
+            ? context.palette.onAccent
+            : context.palette.textMuted,
+        disabledBackgroundColor: context.palette.surfaceMuted,
+        disabledForegroundColor: context.palette.textMuted,
+        side: enabled ? null : BorderSide(color: context.palette.border),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        minimumSize: const Size.fromHeight(44),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
       ),

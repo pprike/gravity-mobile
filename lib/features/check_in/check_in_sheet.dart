@@ -4,9 +4,12 @@ import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:qr_flutter/qr_flutter.dart";
 
+import "../../core/api/error_messages.dart";
 import "../../core/providers/app_providers.dart";
 import "../../core/theme/design_tokens.dart";
+import "../../core/theme/gravity_palette.dart";
 import "../../core/widgets/gravity_button.dart";
+import "../../core/widgets/gravity_feedback.dart";
 import "check_in_repository.dart";
 import "models/check_in_qr.dart";
 
@@ -14,7 +17,7 @@ Future<void> showCheckInSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.white,
+    backgroundColor: context.palette.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
@@ -34,16 +37,21 @@ class _CheckInSheetState extends ConsumerState<CheckInSheet> {
   String? _error;
   bool _loading = true;
   Timer? _refreshTimer;
+  Timer? _countdownTimer;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted && _qr != null) setState(() {});
+    });
   }
 
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    _countdownTimer?.cancel();
     super.dispose();
   }
 
@@ -63,11 +71,15 @@ class _CheckInSheetState extends ConsumerState<CheckInSheet> {
         _qr = qr;
         _loading = false;
       });
+      GravityFeedback.success();
       _scheduleRefresh(qr);
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _error = error.toString();
+        _error = friendlyErrorMessage(
+          error,
+          fallback: "Couldn’t create your check-in code. Please try again.",
+        );
         _loading = false;
       });
     }
@@ -99,26 +111,26 @@ class _CheckInSheetState extends ConsumerState<CheckInSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: GravityColors.gray200,
+              color: context.palette.border,
               borderRadius: BorderRadius.circular(99),
             ),
           ),
           const SizedBox(height: GravitySpacing.lg),
-          const Text(
+          Text(
             "Check in",
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
-              color: GravityColors.gray900,
+              color: context.palette.textPrimary,
             ),
           ),
           const SizedBox(height: GravitySpacing.sm),
-          const Text(
+          Text(
             "Show this code at the front desk. It refreshes automatically so it can’t be reused.",
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
-              color: GravityColors.gray600,
+              color: context.palette.textSecondary,
               height: 1.45,
             ),
           ),
@@ -132,7 +144,7 @@ class _CheckInSheetState extends ConsumerState<CheckInSheet> {
             Text(
               _error!,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: GravityColors.danger600),
+              style: TextStyle(color: context.palette.danger),
             ),
             const SizedBox(height: GravitySpacing.md),
             GravityButton(label: "Try again", onPressed: _load),
@@ -142,22 +154,31 @@ class _CheckInSheetState extends ConsumerState<CheckInSheet> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(GravityRadii.xl),
-                border: Border.all(color: GravityColors.gray200),
+                border: Border.all(color: context.palette.border),
               ),
               child: Column(
                 children: [
-                  QrImageView(
-                    data: _qr!.qrPayload,
-                    size: 220,
-                    backgroundColor: Colors.white,
+                  Semantics(
+                    label:
+                        "Your check-in QR code. Show this at the front desk.",
+                    image: true,
+                    child: ExcludeSemantics(
+                      child: QrImageView(
+                        data: _qr!.qrPayload,
+                        size: 220,
+                        backgroundColor: Colors.white,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: GravitySpacing.sm),
+                  // The QR plate stays white in both themes so scanners keep
+                  // working, so this caption can't follow the palette.
                   Text(
-                    "Expires ${_formatExpiry(_qr!.expiresAt)}",
+                    _expiryLabel(_qr!.expiresAt),
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: GravityColors.gray500,
+                      color: GravityColors.gray600,
                     ),
                   ),
                 ],
@@ -169,10 +190,11 @@ class _CheckInSheetState extends ConsumerState<CheckInSheet> {
     );
   }
 
-  String _formatExpiry(DateTime expiresAt) {
+  String _expiryLabel(DateTime expiresAt) {
     final remaining = expiresAt.difference(DateTime.now());
-    if (remaining.inSeconds <= 0) return "soon";
-    if (remaining.inMinutes < 1) return "in ${remaining.inSeconds}s";
-    return "in ${remaining.inMinutes}m";
+    if (remaining.inSeconds <= 0) return "Refreshing code…";
+    final minutes = remaining.inMinutes;
+    final seconds = remaining.inSeconds % 60;
+    return "Expires in ${minutes > 0 ? "$minutes:${seconds.toString().padLeft(2, "0")}" : "${seconds}s"}";
   }
 }

@@ -1,9 +1,11 @@
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
-import "../../core/theme/design_tokens.dart";
+import "../../core/api/error_messages.dart";
+import "../../core/theme/gravity_palette.dart";
 import "../../core/widgets/gravity_empty_state.dart";
 import "../../core/widgets/gravity_feedback.dart";
+import "../scheduling/scheduling_formatters.dart";
 import "chat_providers.dart";
 import "models/chat_models.dart";
 
@@ -44,7 +46,10 @@ class _ChatConversationScreenState
       if (mounted) {
         GravityFeedback.showSnack(
           context,
-          message: error.toString(),
+          message: friendlyErrorMessage(
+            error,
+            fallback: "Message didn’t send. Please try again.",
+          ),
           error: true,
         );
       }
@@ -58,7 +63,7 @@ class _ChatConversationScreenState
     final messagesAsync = ref.watch(chatMessagesProvider(widget.group.id));
 
     return Scaffold(
-      backgroundColor: GravityColors.neutral50,
+      backgroundColor: context.palette.surfaceMuted,
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,10 +71,10 @@ class _ChatConversationScreenState
             Text(widget.group.name),
             Text(
               widget.group.subtitle,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: GravityColors.gray500,
+                color: context.palette.textSecondary,
               ),
             ),
           ],
@@ -83,7 +88,7 @@ class _ChatConversationScreenState
               error: (error, _) => GravityEmptyState(
                 icon: Icons.error_outline,
                 title: "Couldn't load messages",
-                description: error.toString(),
+                description: friendlyErrorMessage(error),
               ),
               data: (messages) {
                 if (messages.isEmpty) {
@@ -94,12 +99,17 @@ class _ChatConversationScreenState
                         "Say hi to your studio. Messages stay in this group.",
                   );
                 }
+                // Reversed so the newest message is always in view without
+                // chasing it with a post-frame scroll.
                 return ListView.builder(
                   controller: _scrollController,
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                  reverse: true,
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
-                    return _Bubble(message: messages[index]);
+                    return _Bubble(
+                      message: messages[messages.length - 1 - index],
+                    );
                   },
                 );
               },
@@ -109,9 +119,9 @@ class _ChatConversationScreenState
             top: false,
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: GravityColors.gray200)),
+              decoration: BoxDecoration(
+                color: context.palette.surface,
+                border: Border(top: BorderSide(color: context.palette.border)),
               ),
               child: Row(
                 children: [
@@ -125,7 +135,7 @@ class _ChatConversationScreenState
                       decoration: InputDecoration(
                         hintText: "Message ${widget.group.name}",
                         filled: true,
-                        fillColor: GravityColors.neutral50,
+                        fillColor: context.palette.surfaceMuted,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 14,
                           vertical: 10,
@@ -140,17 +150,19 @@ class _ChatConversationScreenState
                   const SizedBox(width: 8),
                   IconButton.filled(
                     onPressed: _sending ? null : _send,
+                    tooltip: "Send message",
                     style: IconButton.styleFrom(
-                      backgroundColor: GravityColors.primary600,
-                      foregroundColor: Colors.white,
+                      backgroundColor: context.palette.accent,
+                      foregroundColor: context.palette.onAccent,
+                      minimumSize: const Size(44, 44),
                     ),
                     icon: _sending
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 16,
                             height: 16,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white,
+                              color: context.palette.onAccent,
                             ),
                           )
                         : const Icon(Icons.send_rounded, size: 18),
@@ -181,12 +193,12 @@ class _Bubble extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: mine ? GravityColors.primary600 : Colors.white,
+            color: mine ? context.palette.accent : context.palette.surface,
             borderRadius: BorderRadius.circular(16).copyWith(
               bottomRight: mine ? const Radius.circular(4) : null,
               bottomLeft: mine ? null : const Radius.circular(4),
             ),
-            border: mine ? null : Border.all(color: GravityColors.gray200),
+            border: mine ? null : Border.all(color: context.palette.border),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,10 +208,10 @@ class _Bubble extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Text(
                     message.senderName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: GravityColors.primary700,
+                      color: context.palette.accentStrong,
                     ),
                   ),
                 ),
@@ -208,7 +220,21 @@ class _Bubble extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   height: 1.4,
-                  color: mine ? Colors.white : GravityColors.gray900,
+                  color: mine
+                      ? context.palette.onAccent
+                      : context.palette.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  SchedulingFormatters.timeOfDay(message.createdAt),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: mine ? Colors.white70 : context.palette.textMuted,
+                  ),
                 ),
               ),
             ],

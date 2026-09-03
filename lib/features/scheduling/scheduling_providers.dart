@@ -29,6 +29,31 @@ final studioLocationsProvider =
       }
     });
 
+final bookingHistoryProvider = FutureProvider.autoDispose<BookingHistoryPage>((
+  ref,
+) {
+  ref.watch(demoCatalogProvider);
+  return ref.watch(schedulingRepositoryProvider).listBookingHistory(size: 50);
+});
+
+final attendanceSummaryProvider = FutureProvider.autoDispose<AttendanceSummary>(
+  (ref) {
+    ref.watch(demoCatalogProvider);
+    return ref.watch(schedulingRepositoryProvider).getAttendanceSummary();
+  },
+);
+
+/// Booking policy is advisory copy, so a failure falls back to defaults rather
+/// than blocking the bookings screen.
+final bookingPolicyProvider = FutureProvider<BookingPolicy>((ref) async {
+  ref.watch(demoCatalogProvider);
+  try {
+    return await ref.watch(schedulingRepositoryProvider).getBookingPolicy();
+  } catch (_) {
+    return const BookingPolicy();
+  }
+});
+
 final classSessionsProvider = FutureProvider.autoDispose<List<ClassSession>>((
   ref,
 ) async {

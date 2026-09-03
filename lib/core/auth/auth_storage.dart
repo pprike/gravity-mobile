@@ -14,6 +14,7 @@ class AuthStorage {
   final FlutterSecureStorage _storage;
   final bool persistToSecureStorage;
   String? _memoryFallback;
+  void Function()? onSessionCleared;
 
   Future<AuthSession?> readSession() async {
     final raw = await _readRaw();
@@ -40,12 +41,14 @@ class AuthStorage {
 
   Future<void> clearSession() async {
     _memoryFallback = null;
-    if (!persistToSecureStorage) return;
-    try {
-      await _storage.delete(key: _sessionKey);
-    } catch (_) {
-      // In-memory fallback is already cleared.
+    if (persistToSecureStorage) {
+      try {
+        await _storage.delete(key: _sessionKey);
+      } catch (_) {
+        // In-memory fallback is already cleared.
+      }
     }
+    onSessionCleared?.call();
   }
 
   Future<String?> _readRaw() async {

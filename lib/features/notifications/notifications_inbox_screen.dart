@@ -1,8 +1,12 @@
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
+import "../../core/api/error_messages.dart";
 import "../../core/theme/design_tokens.dart";
+import "../../core/theme/gravity_palette.dart";
 import "../../core/widgets/gravity_empty_state.dart";
+import "../../core/widgets/gravity_feedback.dart";
+import "../../core/utils/relative_time.dart";
 import "models/notification_models.dart";
 import "notification_providers.dart";
 
@@ -14,15 +18,29 @@ class NotificationsInboxScreen extends ConsumerWidget {
     final inboxAsync = ref.watch(inboxProvider);
 
     return Scaffold(
-      backgroundColor: GravityColors.neutral50,
+      backgroundColor: context.palette.surfaceMuted,
       appBar: AppBar(
         title: const Text("Notifications"),
         actions: [
           TextButton(
-            onPressed: () async {
-              await ref.read(notificationRepositoryProvider).markAllRead();
-              ref.invalidate(inboxProvider);
-            },
+            onPressed: (inboxAsync.valueOrNull?.unreadCount ?? 0) == 0
+                ? null
+                : () async {
+                    try {
+                      await ref
+                          .read(notificationRepositoryProvider)
+                          .markAllRead();
+                      ref.invalidate(inboxProvider);
+                    } catch (error) {
+                      if (context.mounted) {
+                        GravityFeedback.showSnack(
+                          context,
+                          message: friendlyErrorMessage(error),
+                          error: true,
+                        );
+                      }
+                    }
+                  },
             child: const Text("Mark all read"),
           ),
         ],
@@ -32,12 +50,12 @@ class NotificationsInboxScreen extends ConsumerWidget {
         error: (error, _) => GravityEmptyState(
           icon: Icons.error_outline,
           title: "Couldn't load updates",
-          description: error.toString(),
+          description: friendlyErrorMessage(error),
           actionLabel: "Retry",
           onAction: () => ref.invalidate(inboxProvider),
         ),
-        data: (items) {
-          if (items.isEmpty) {
+        data: (inbox) {
+          if (inbox.items.isEmpty) {
             return const GravityEmptyState(
               icon: Icons.notifications_none_rounded,
               title: "You're all caught up",
@@ -46,10 +64,10 @@ class NotificationsInboxScreen extends ConsumerWidget {
           }
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-            itemCount: items.length,
+            itemCount: inbox.items.length,
             separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
-              final item = items[index];
+              final item = inbox.items[index];
               return _InboxCard(
                 notification: item,
                 onTap: () async {
@@ -78,7 +96,7 @@ class _InboxCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: context.palette.surface,
       borderRadius: BorderRadius.circular(GravityRadii.lg),
       child: InkWell(
         onTap: onTap,
@@ -87,7 +105,7 @@ class _InboxCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(GravityRadii.lg),
-            border: Border.all(color: GravityColors.gray200),
+            border: Border.all(color: context.palette.border),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,15 +115,15 @@ class _InboxCard extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: notification.read
-                      ? GravityColors.neutral50
-                      : GravityColors.primary50,
+                      ? context.palette.surfaceMuted
+                      : context.palette.accentSurface,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   notification.category == "classMessages"
                       ? Icons.event_available_rounded
                       : Icons.campaign_outlined,
-                  color: GravityColors.primary700,
+                  color: context.palette.accentStrong,
                   size: 20,
                 ),
               ),
@@ -124,28 +142,39 @@ class _InboxCard extends StatelessWidget {
                               fontWeight: notification.read
                                   ? FontWeight.w600
                                   : FontWeight.w800,
-                              color: GravityColors.gray900,
+                              color: context.palette.textPrimary,
                             ),
                           ),
                         ),
-                        if (!notification.read)
+                        const SizedBox(width: 8),
+                        Text(
+                          relativeTimeLabel(notification.createdAt),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: context.palette.textMuted,
+                          ),
+                        ),
+                        if (!notification.read) ...[
+                          const SizedBox(width: 6),
                           Container(
                             width: 8,
                             height: 8,
-                            decoration: const BoxDecoration(
-                              color: GravityColors.primary600,
+                            decoration: BoxDecoration(
+                              color: context.palette.accent,
                               shape: BoxShape.circle,
                             ),
                           ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(
                       notification.body,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         height: 1.4,
-                        color: GravityColors.gray600,
+                        color: context.palette.textSecondary,
                       ),
                     ),
                   ],

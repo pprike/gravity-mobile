@@ -4,6 +4,7 @@ import "../auth/auth_session.dart";
 import "../auth/auth_storage.dart";
 import "../config/app_config.dart";
 import "api_exception.dart";
+import "response_cache.dart";
 
 class ApiEnvelope<T> {
   ApiEnvelope({required this.data, this.error});
@@ -39,18 +40,22 @@ class ApiErrorBody {
 }
 
 class ApiClient {
-  ApiClient({required AppConfig config, required this._authStorage, Dio? dio})
-    : _config = config,
-      _dio =
-          dio ??
-          Dio(
-            BaseOptions(
-              baseUrl: config.apiBaseUrl,
-              connectTimeout: const Duration(seconds: 15),
-              receiveTimeout: const Duration(seconds: 15),
-              headers: {"Content-Type": "application/json"},
-            ),
-          ) {
+  ApiClient({
+    required AppConfig config,
+    required this._authStorage,
+    Dio? dio,
+    ResponseCache? responseCache,
+  }) : _config = config,
+       _dio =
+           dio ??
+           Dio(
+             BaseOptions(
+               baseUrl: config.apiBaseUrl,
+               connectTimeout: const Duration(seconds: 15),
+               receiveTimeout: const Duration(seconds: 15),
+               headers: {"Content-Type": "application/json"},
+             ),
+           ) {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -62,6 +67,11 @@ class ApiClient {
         },
         onError: (error, handler) async {
           if (error.response?.statusCode == 401) {
+            final session = await _authStorage.readSession();
+            if (session?.isDemo == true) {
+              handler.next(error);
+              return;
+            }
             final refreshed = await _tryRefreshToken();
             if (refreshed != null) {
               final request = error.requestOptions;
@@ -83,6 +93,11 @@ class ApiClient {
         },
       ),
     );
+
+    // Registered last so token refresh gets a chance before we fall back to disk.
+    if (responseCache != null) {
+      _dio.interceptors.add(OfflineCacheInterceptor(responseCache));
+    }
   }
 
   final AppConfig _config;
@@ -105,15 +120,7 @@ class ApiClient {
       final data = envelope.data;
       if (data == null) return null;
 
-      final nextSession = AuthSession(
-        accessToken: data["accessToken"] as String,
-        refreshToken: data["refreshToken"] as String,
-        expiresIn: data["expiresIn"] as int,
-        user: AuthUser.fromJson(data["user"] as Map<String, dynamic>),
-        expiresAt: DateTime.now().add(
-          Duration(seconds: data["expiresIn"] as int),
-        ),
-      );
+      final nextSession = AuthSession.fromAuthTokens(data);
       await _authStorage.saveSession(nextSession);
       return nextSession;
     } catch (_) {
@@ -178,9 +185,21 @@ class ApiClient {
     return _request("DELETE", path, fromJson: fromJson);
   }
 
-  Future<void> deleteVoid(String path) async {
+  Future<void> deleteVoid(String path) {
+    return _requestVoid("DELETE", path);
+  }
+
+  Future<void> postVoid(String path, {Object? data}) {
+    return _requestVoid("POST", path, data: data);
+  }
+
+  Future<void> _requestVoid(String method, String path, {Object? data}) async {
     try {
-      final response = await _dio.delete(path);
+      final response = await _dio.request(
+        path,
+        data: data,
+        options: Options(method: method),
+      );
       if (response.statusCode == 204 ||
           response.data == null ||
           response.data == "") {

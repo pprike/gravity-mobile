@@ -84,4 +84,43 @@ class SchedulingRepository {
     }
     return _apiClient.deleteVoid("/api/v1/class-sessions/$sessionId/waitlist");
   }
+
+  Future<BookingHistoryPage> listBookingHistory({
+    String? status,
+    int page = 0,
+    int size = 20,
+  }) {
+    if (_demo) {
+      return Future.value(
+        demoCatalog!.listBookingHistory(status: status, page: page, size: size),
+      );
+    }
+    return _apiClient.get(
+      "/api/v1/me/class-bookings",
+      queryParameters: {
+        if (status != null) "status": status,
+        "page": page,
+        "size": size,
+      },
+      fromJson: (json) =>
+          BookingHistoryPage.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  Future<AttendanceSummary> getAttendanceSummary() {
+    if (_demo) return Future.value(demoCatalog!.attendanceSummary());
+    return _apiClient.get(
+      "/api/v1/me/attendance/summary",
+      fromJson: (json) =>
+          AttendanceSummary.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  Future<BookingPolicy> getBookingPolicy() {
+    if (_demo) return Future.value(const BookingPolicy());
+    return _apiClient.get(
+      "/api/v1/me/booking-policy",
+      fromJson: (json) => BookingPolicy.fromJson(json as Map<String, dynamic>),
+    );
+  }
 }

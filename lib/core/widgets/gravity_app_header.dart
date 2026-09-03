@@ -3,7 +3,7 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 
 import "../../core/providers/app_providers.dart";
 import "../../features/branding/branding.dart";
-import "../theme/design_tokens.dart";
+import "../theme/gravity_palette.dart";
 
 class GravityAppHeader extends ConsumerWidget {
   const GravityAppHeader({
@@ -26,11 +26,11 @@ class GravityAppHeader extends ConsumerWidget {
         : (branding?.organizationName ?? "Gravity").toUpperCase();
 
     return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: GravityColors.gray200)),
+      constraints: const BoxConstraints(minHeight: 56),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+      decoration: BoxDecoration(
+        color: context.palette.surface,
+        border: Border(bottom: BorderSide(color: context.palette.border)),
       ),
       child: Row(
         children: [
@@ -44,69 +44,79 @@ class GravityAppHeader extends ConsumerWidget {
                   width: 24,
                   height: 24,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => const Icon(
+                  errorBuilder: (_, _, _) => Icon(
                     Icons.terrain_rounded,
                     size: 24,
-                    color: GravityColors.gray900,
+                    color: context.palette.accent,
                   ),
                 ),
               ),
             )
           else
-            const Padding(
-              padding: EdgeInsets.only(right: 8),
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
               child: Icon(
                 Icons.terrain_rounded,
                 size: 24,
-                color: GravityColors.gray900,
+                color: context.palette.accent,
               ),
             ),
           Expanded(
             child: Text(
               name,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.4,
-                color: GravityColors.gray900,
+                color: context.palette.textPrimary,
               ),
             ),
           ),
           trailing ??
-              GestureDetector(
-                onTap: onNotifications,
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: GravityColors.neutral50,
+              Semantics(
+                button: true,
+                label: unreadCount > 0
+                    ? "Notifications, $unreadCount unread"
+                    : "Notifications",
+                child: Tooltip(
+                  message: "Notifications",
+                  child: Material(
+                    color: context.palette.surfaceMuted,
                     borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      const Center(
-                        child: Icon(
-                          Icons.notifications_none_rounded,
-                          size: 20,
-                          color: GravityColors.gray900,
+                    child: InkWell(
+                      onTap: onNotifications,
+                      borderRadius: BorderRadius.circular(10),
+                      child: SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Center(
+                              child: Icon(
+                                Icons.notifications_none_rounded,
+                                size: 20,
+                                color: context.palette.textPrimary,
+                              ),
+                            ),
+                            if (unreadCount > 0)
+                              Positioned(
+                                top: 10,
+                                right: 10,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: context.palette.danger,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                      if (unreadCount > 0)
-                        Positioned(
-                          top: 6,
-                          right: 6,
-                          child: Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: GravityColors.danger600,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                    ],
+                    ),
                   ),
                 ),
               ),

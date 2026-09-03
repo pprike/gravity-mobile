@@ -3,147 +3,176 @@ import "package:flutter/services.dart";
 import "package:google_fonts/google_fonts.dart";
 
 import "design_tokens.dart";
+import "gravity_palette.dart";
 
 class AppTheme {
-  static ThemeData light() {
-    const colorScheme = ColorScheme(
-      brightness: Brightness.light,
-      primary: GravityColors.primary600,
-      onPrimary: Colors.white,
-      secondary: GravityColors.primary500,
-      onSecondary: Colors.white,
-      error: GravityColors.danger600,
-      onError: Colors.white,
-      surface: Colors.white,
-      onSurface: GravityColors.neutral900,
+  static ThemeData light() =>
+      _build(Brightness.light, GravityPalette.light, SystemUiOverlayStyle.dark);
+
+  static ThemeData dark() =>
+      _build(Brightness.dark, GravityPalette.dark, SystemUiOverlayStyle.light);
+
+  static ThemeData _build(
+    Brightness brightness,
+    GravityPalette palette,
+    SystemUiOverlayStyle overlayStyle,
+  ) {
+    final colorScheme = ColorScheme(
+      brightness: brightness,
+      primary: palette.accent,
+      onPrimary: palette.onAccent,
+      secondary: palette.accentStrong,
+      onSecondary: palette.onAccent,
+      error: palette.danger,
+      onError: palette.onAccent,
+      surface: palette.surface,
+      onSurface: palette.textPrimary,
+      surfaceContainerHighest: palette.surfaceMuted,
+      outline: palette.border,
     );
 
     return ThemeData(
       useMaterial3: true,
+      brightness: brightness,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: GravityColors.neutral50,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white,
-        foregroundColor: GravityColors.neutral900,
+      extensions: [palette],
+      scaffoldBackgroundColor: palette.canvas,
+      dividerColor: palette.border,
+      dividerTheme: DividerThemeData(color: palette.border, space: 1),
+      appBarTheme: AppBarTheme(
+        backgroundColor: palette.surface,
+        foregroundColor: palette.textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
         surfaceTintColor: Colors.transparent,
-        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        systemOverlayStyle: overlayStyle,
         titleTextStyle: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
-          color: GravityColors.neutral900,
+          color: palette.textPrimary,
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: Colors.white,
+        backgroundColor: palette.surface,
         surfaceTintColor: Colors.transparent,
         indicatorColor: Colors.transparent,
         elevation: 0,
-        height: 72,
+        height: 80,
         shadowColor: Colors.transparent,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return TextStyle(
-            fontSize: 10,
+            fontSize: 11,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-            color: selected ? GravityColors.primary600 : GravityColors.gray400,
+            color: selected ? palette.accent : palette.textMuted,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return IconThemeData(
-            color: selected ? GravityColors.primary600 : GravityColors.gray400,
+            color: selected ? palette.accent : palette.textMuted,
             size: 22,
           );
         }),
       ),
+      tabBarTheme: TabBarThemeData(
+        labelColor: palette.accentStrong,
+        unselectedLabelColor: palette.textMuted,
+        indicatorColor: palette.accent,
+        dividerColor: palette.border,
+      ),
       textTheme: GoogleFonts.interTextTheme(
-        const TextTheme(
+        TextTheme(
           headlineMedium: TextStyle(
             fontSize: 30,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.5,
-            color: GravityColors.neutral900,
+            color: palette.textPrimary,
           ),
           headlineSmall: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.25,
-            color: GravityColors.neutral900,
+            color: palette.textPrimary,
           ),
           titleLarge: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
-            color: GravityColors.neutral900,
+            color: palette.textPrimary,
           ),
           titleMedium: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: GravityColors.neutral900,
+            color: palette.textPrimary,
           ),
           titleSmall: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: GravityColors.neutral900,
+            color: palette.textPrimary,
           ),
           bodyLarge: TextStyle(
             fontSize: 16,
             height: 1.5,
-            color: GravityColors.neutral800,
+            color: palette.textPrimary,
           ),
           bodyMedium: TextStyle(
             fontSize: 14,
             height: 1.5,
-            color: GravityColors.neutral700,
+            color: palette.textSecondary,
           ),
           labelMedium: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: GravityColors.neutral600,
+            color: palette.textSecondary,
           ),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: GravityColors.gray900,
-        contentTextStyle: const TextStyle(color: Colors.white, fontSize: 14),
+        backgroundColor: palette.inverseSurface,
+        contentTextStyle: TextStyle(
+          color: palette.onInverseSurface,
+          fontSize: 14,
+        ),
         insetPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(GravityRadii.md),
         ),
       ),
       dialogTheme: DialogThemeData(
+        backgroundColor: palette.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(GravityRadii.xl),
         ),
       ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: palette.surface,
+        surfaceTintColor: Colors.transparent,
+      ),
       cardTheme: CardThemeData(
-        color: Colors.white,
+        color: palette.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(GravityRadii.lg),
-          side: const BorderSide(color: GravityColors.neutral200),
+          side: BorderSide(color: palette.border),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: palette.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(GravityRadii.md),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(GravityRadii.md),
-          borderSide: const BorderSide(color: GravityColors.neutral300),
+          borderSide: BorderSide(color: palette.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(GravityRadii.md),
-          borderSide: const BorderSide(
-            color: GravityColors.primary500,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: palette.accent, width: 2),
         ),
+        hintStyle: TextStyle(color: palette.textMuted),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 12,
@@ -151,8 +180,8 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: GravityColors.primary600,
-          foregroundColor: Colors.white,
+          backgroundColor: palette.accent,
+          foregroundColor: palette.onAccent,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           shape: RoundedRectangleBorder(
@@ -163,8 +192,8 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: GravityColors.neutral900,
-          side: const BorderSide(color: GravityColors.neutral300),
+          foregroundColor: palette.textPrimary,
+          side: BorderSide(color: palette.border),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(GravityRadii.md),
@@ -172,6 +201,12 @@ class AppTheme {
           textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
       ),
+      listTileTheme: ListTileThemeData(
+        textColor: palette.textPrimary,
+        iconColor: palette.textSecondary,
+      ),
+      iconTheme: IconThemeData(color: palette.textSecondary),
+      progressIndicatorTheme: ProgressIndicatorThemeData(color: palette.accent),
     );
   }
 }

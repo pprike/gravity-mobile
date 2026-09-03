@@ -1,6 +1,7 @@
 import "package:flutter/material.dart";
 
 import "../theme/design_tokens.dart";
+import "../theme/gravity_palette.dart";
 
 class GravityCard extends StatelessWidget {
   const GravityCard({
@@ -14,22 +15,27 @@ class GravityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: padding,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(GravityRadii.lg),
-        border: Border.all(color: GravityColors.neutral200),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
+    // Material (not a plain Container) so ListTile/Switch descendants can paint
+    // their ink and resolve a background colour.
+    return Material(
+      color: context.palette.surface,
+      borderRadius: BorderRadius.circular(GravityRadii.lg),
+      child: Container(
+        width: double.infinity,
+        padding: padding,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(GravityRadii.lg),
+          border: Border.all(color: context.palette.border),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0A000000),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: child,
       ),
-      child: child,
     );
   }
 }

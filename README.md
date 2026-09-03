@@ -20,13 +20,13 @@ Flutter member app for the [Gravity](https://github.com/pprike/gravity-docs) mul
 ## Features
 
 - Member login against `gravity-service` (defaults to `member@tenant-a.com`)
-- **Explore demo studio** — full member flows without a backend
-- Home shell with 5-tab bottom navigation and notification inbox
-- Profile view, edit, membership card, and notification preferences
+- Home shell with 5-tab bottom navigation, membership, and notification inbox
+- Profile view/edit, avatar, password, and Stripe billing portal
 - Class schedule with day slider, studio filter, class detail, book, and waitlist
 - Upcoming bookings with cancel and check-in
-- Community tab: studio announcements + group chat
+- Community tab: studio announcements (group chat UI is ready; backend is still rolling out)
 - Time-locked QR check-in
+- **Explore demo studio** in debug builds (or `--dart-define=ENABLE_DEMO=true`)
 
 ## Local development
 
@@ -88,6 +88,7 @@ Other seeded accounts (same password): `admin@tenant-a.com`, `owner@tenant-a.com
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `API_BASE_URL` | `http://localhost:8080` | Base URL for the Gravity API (pass via `--dart-define`) |
+| `ENABLE_DEMO` | `false` | Show **Explore demo studio** in release/profile builds. Debug builds always include it. |
 
 ## Documentation
 
